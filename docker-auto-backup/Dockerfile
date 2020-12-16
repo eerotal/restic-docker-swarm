@@ -9,6 +9,7 @@ ENV CRON_EXPR="0 4 * * *"
 ENV ENABLE_RSYNC="n"
 ENV RSYNC_DEST=""
 ENV SSH_HOST=""
+ENV ROTATE_AFTER="5"
 
 USER root
 WORKDIR /root
@@ -23,6 +24,9 @@ RUN sed -i "1s:^:WORKDIR=\"$(pwd)\"\n:" docker-config.sh
 COPY docker-entrypoint.sh .
 COPY docker-backup.sh .
 COPY docker-healthcheck.sh .
+COPY docker-rotate-backups.sh .
+COPY docker-rotate-local.sh .
+COPY docker-rotate-remote.sh .
 
 CMD ["sh", "docker-entrypoint.sh"]
 

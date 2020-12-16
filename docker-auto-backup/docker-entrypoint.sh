@@ -6,21 +6,14 @@
 
 set -e
 
-. ./docker-config.sh
-
-terminate_pids() {
-    trap "" CHLD
-    echo "[INFO] A service exited. Stopping container."
-    for p in $@; do
-        kill $p 2> /dev/null
-    done
-}
+. /root/docker-config.sh
 
 # Store environment variables in a file so that cron jobs can use them.
 {
 echo "ENABLE_RSYNC='$ENABLE_RSYNC'"
 echo "RSYNC_DEST='$RSYNC_DEST'"
 echo "SSH_HOST='$SSH_HOST'"
+echo "ROTATE_AFTER='$ROTATE_AFTER'"
 } > "$ENV_FILE"
 
 if [ -n "$CRON_EXPR" ]; then
@@ -30,15 +23,5 @@ else
     echo "[INFO] Cron expression empty. Won't create cron.d entry."
 fi
 
-pids=""
-
 echo "[INFO] Start cron."
-cron
-pids="$pids $!"
-
-# Terminate all child processes if a child terminates.
-trap "terminate_pids $pids" CHLD
-
-for p in $pids; do
-    wait $p
-done
+cron -f

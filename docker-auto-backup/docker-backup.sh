@@ -12,7 +12,7 @@
 
 set -e
 
-. ./docker-config.sh
+. /root/docker-config.sh
 
 # Load environment from a script because we are running in a cron job.
 . "$ENV_FILE"
@@ -26,7 +26,6 @@ fi
 backup_tmp="docker-volume-backup.tar.gz"
 backup_enc="backup_$(date +"%Y-%m-%dT%H-%M-%S").tar.gz.gpg"
 
-
 echo "[INFO] Backup started at $(date -Iseconds)"
 
 # Archive files into a .tar.gz archive in a temporary directory.
@@ -39,7 +38,7 @@ if [ ! -f "$ENCRYPTION_KEY_FILE" ]; then
 fi
 
 # Encrypt the .tar.gz archive using GPG and a user-supplied public key.
-echo "[INFO] Encrypt archive."
+echo "[INFO] Encrypting archive."
 gpg --verbose \
     --output "$TMP_DIR/$backup_enc" \
     --encrypt \
@@ -47,11 +46,11 @@ gpg --verbose \
     "$TMP_DIR/$backup_tmp"
 
 # Remove (unencrypted) temporary files.
-echo "[INFO] Remove temporary files."
+echo "[INFO] Removing temporary files."
 rm -fv "$TMP_DIR/$backup_tmp"
 
 # Store the encrypted backup archive locally.
-echo "[INFO] Move encrypted archive to output directory."
+echo "[INFO] Moving encrypted archive to output directory."
 mkdir -p "$ARCHIVE_DIR"
 mv -v "$TMP_DIR/$backup_enc" "$ARCHIVE_DIR"
 
@@ -78,11 +77,15 @@ if [ "$ENABLE_RSYNC" = "y" ]; then
     fi
 
     echo "[INFO] Rsync encrypted archive to backup server."
-    export RSYNC_RSH="ssh -i $SSH_KEY_FILE -o UserKnownHostsFile=$SSH_KNOWN_HOSTS_FILE"
+    export RSYNC_RSH="ssh $SSH_OPTS"
     rsync -av "$ARCHIVE_DIR/$backup_enc" "${SSH_HOST}:${RSYNC_DEST}"
 else
     echo "[INFO] Skipping rsync."
 fi
+
+# Rotate backups.
+sh "${WORKDIR}/docker-rotate-local.sh"
+sh "${WORKDIR}/docker-rotate-remote.sh"
 
 # Store the last time a backup succeeded. This is used by the
 # periodic Docker healthcheck.

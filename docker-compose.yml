@@ -1,7 +1,7 @@
 version: "3.6"
 
 services:
-  docker-autob-ackup:
+  docker-auto-backup:
     build: docker-auto-backup/
     container_name: docker-auto-backup
 
@@ -9,10 +9,10 @@ services:
     init: true
 
     environment:
-      CRON_EXPR: ""
-      ENABLE_RSYNC: "n"
-      SSH_HOST: ""
-      RSYNC_DEST: ""
+      CRON_EXPR: "* * * * *"
+      ENABLE_RSYNC: $ENABLE_RSYNC
+      SSH_HOST: $SSH_HOST
+      RSYNC_DEST: $RSYNC_DEST
 
     volumes:
       - vol_docker-auto-backup-test:/backup:ro
@@ -22,5 +22,5 @@ services:
       - ./known_hosts:/root/.ssh/known_hosts
 
 volumes:
-  vol_autobackup-test:
-    name: vol_autobackup-test
+  vol_docker-auto-backup-test:
+    name: vol_docker-auto-backup-test
