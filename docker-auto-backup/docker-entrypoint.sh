@@ -6,22 +6,22 @@
 
 set -e
 
-. /root/docker-config.sh
+. /root/config.sh
 
 # Store environment variables in a file so that cron jobs can use them.
 {
-echo "ENABLE_RSYNC='$ENABLE_RSYNC'"
-echo "RSYNC_DEST='$RSYNC_DEST'"
-echo "SSH_HOST='$SSH_HOST'"
-echo "ROTATE_AFTER='$ROTATE_AFTER'"
+printf "ENABLE_RSYNC='$ENABLE_RSYNC'\n"
+printf "RSYNC_DEST='$RSYNC_DEST'\n"
+printf "SSH_HOST='$SSH_HOST'\n"
+printf "ROTATE_AFTER='$ROTATE_AFTER'\n"
 } > "$ENV_FILE"
 
 if [ -n "$CRON_EXPR" ]; then
-    echo "[INFO] Install cron.d entry."
-    echo "$CRON_EXPR root sh $WORKDIR/docker-backup.sh >> /proc/1/fd/1 2>&1" > "$CRONTAB_FILE"
+    printf "[INFO] Install cron.d entry.\n"
+    printf "$CRON_EXPR sh $WORKDIR/backup.sh >> /proc/1/fd/1 2>&1\n" | crontab -
 else
-    echo "[INFO] Cron expression empty. Won't create cron.d entry."
+    printf "[INFO] Cron expression empty. Won't create cron.d entry.\n"
 fi
 
-echo "[INFO] Start cron."
-cron -f
+printf "[INFO] Start cron.\n"
+crond -f

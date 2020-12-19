@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM alpine:3
 
 LABEL description="A Docker image for automatically backing up Docker volumes."
 LABEL maintainer="Eero Talus"
@@ -14,19 +14,18 @@ ENV ROTATE_AFTER="5"
 USER root
 WORKDIR /root
 
-RUN DEBIAN_FRONTEND=noninteractive; \
-    apt-get update&& \
-    apt-get install -y --no-install-recommends rsync gpg ssh cron
-
-COPY docker-config.sh .
-RUN sed -i "1s:^:WORKDIR=\"$(pwd)\"\n:" docker-config.sh
+RUN apk update && \
+    apk add --no-cache \
+        rsync \
+        gnupg \
+        openssh-client \
+        python3 && \
+    rm -rf /var/cache/apk
 
 COPY docker-entrypoint.sh .
-COPY docker-backup.sh .
 COPY docker-healthcheck.sh .
-COPY docker-rotate-backups.sh .
-COPY docker-rotate-local.sh .
-COPY docker-rotate-remote.sh .
+COPY src/ .
+RUN sed -i "1s:^:WORKDIR=\"$(pwd)\"\n:" config.sh
 
 CMD ["sh", "docker-entrypoint.sh"]
 

@@ -6,10 +6,10 @@
 
 set -e
 
-. /root/docker-config.sh
+. /root/config.sh
 
 if [ $# -lt 1 ]; then
-    echo "[Error] You must specify the failure threshold in seconds as the only argument."
+    printf "[Error] You must specify the failure threshold in seconds as the only argument.\n"
     exit 1
 fi
 

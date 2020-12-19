@@ -11,8 +11,9 @@ services:
     environment:
       CRON_EXPR: "* * * * *"
       ENABLE_RSYNC: $ENABLE_RSYNC
-      SSH_HOST: $SSH_HOST
       RSYNC_DEST: $RSYNC_DEST
+      SSH_HOST: $SSH_HOST
+      ROTATE_AFTER: 5
 
     volumes:
       - vol_docker-auto-backup-test:/backup:ro
