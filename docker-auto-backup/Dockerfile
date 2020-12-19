@@ -10,12 +10,14 @@ ENV ENABLE_RSYNC="n"
 ENV RSYNC_DEST=""
 ENV SSH_HOST=""
 ENV ROTATE_AFTER="5"
+ENV CONTAINERS=""
 
 USER root
 WORKDIR /root
 
 RUN apk update && \
     apk add --no-cache \
+        docker-cli \
         rsync \
         gnupg \
         openssh-client \

@@ -14,6 +14,7 @@ printf "ENABLE_RSYNC='$ENABLE_RSYNC'\n"
 printf "RSYNC_DEST='$RSYNC_DEST'\n"
 printf "SSH_HOST='$SSH_HOST'\n"
 printf "ROTATE_AFTER='$ROTATE_AFTER'\n"
+printf "CONTAINERS='$CONTAINERS'\n"
 } > "$ENV_FILE"
 
 if [ -n "$CRON_EXPR" ]; then

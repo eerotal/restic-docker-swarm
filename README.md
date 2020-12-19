@@ -21,13 +21,14 @@ Docker environment variables listed in the table below.
 Additionally, if using remote backups, you must also mount volumes or files at
 the following locations in the container.
 
-| Mountpoint             | Example source | Description                                                 |
-|------------------------|----------------|-------------------------------------------------------------|
-| /backup/               | backup-volume  | The directory from where backups are made.                  |
-| /archive/              | ./archive/     | The directory where local backups are stored.               |
-| /root/encryption_key   | ./pubkey.gpg   | A gpg public key to use for encrypting backups.             |
-| /root/.ssh/ssh_key     | ./id_rsa       | An ssh private key to use for accessing the remote server.  |
-| /root/.ssh/known_hosts | ./known_hosts  | An ssh `known_hosts` file which includes the remote server. |
+| Mountpoint             | Example source       | Description                                                 |
+|------------------------|----------------------|-------------------------------------------------------------|
+| /backup/               | backup-volume        | The directory from where backups are made.                  |
+| /archive/              | ./archive/           | The directory where local backups are stored.               |
+| /root/encryption_key   | ./pubkey.gpg         | A gpg public key to use for encrypting backups.             |
+| /root/.ssh/ssh_key     | ~/.ssh/id_rsa        | An ssh private key to use for accessing the remote server.  |
+| /root/.ssh/known_hosts | ~/.ssh/known_hosts   | An ssh `known_hosts` file which includes the remote server. |
+| /var/run/docker.sock   | /var/run/docker.sock | Docker socket required for running hooks.                   |
 
 You should mount the volume you want to backup at `/backup/`. All other paths
 can be bind mounted.
@@ -36,6 +37,13 @@ After configuring the container, you can simply start it up and it'll
 automatically backup your volume according to `CRON_EXPR`. If you are using
 `rsync` to copy the backups onto a remote server, make sure your SSH key
 isn't password protected.
+
+## Dependencies
+
+`docker-auto-backup` is a self-contained Docker image based on Alpine Linux
+so the only "dependency" you need is the Docker runtime. If you want to rsync
+backups to a remote server, you need to install Python3, ssh and rsync there.
+No other dependencies are needed.
 
 ## Manual backups
 
@@ -52,7 +60,29 @@ If you are using using docker-compose you can also use:
 The `backup.sh` script is located in `/root` and can be run without
 specifying any arguments: `cd /root && sh backup.sh`.
 
-## Docker HEALTHCHECK
+## Pre- and post-hooks
+
+`docker-auto-backup` also supports running pre- and post-backup hooks in
+containers. Hooks are defined using Docker labels and the `CONTAINERS`
+environment variable. To add a pre- or post-backup hook to a service container,
+do the following:
+
+1. Add the container name to the `CONTAINERS` environment variable. This is
+   a space-separated list of container names. Only containers listed in this
+   variable are included in hook searches.1
+2. Add a lable to the service container. The format of the label must be
+   `docker-auto-backup.[pre/post]-hook=[shell command to execute]`.
+
+Once the hooks are defined, the `docker-auto-backup` container automatically
+executes them when needed. Pre-hooks are executed in all configured containers
+before each backup. Post-hooks are executed in all configured containers after
+each backup.
+
+Hooks are useful for example when backing up a database. You can dump the
+database to a file in a pre-backup hook and delete the database dump in a
+post-backup hook.
+
+## Docker container healthcheck
 
 The default image configuration also includes a Docker HEALTHCHECK. The actual
 healthcheck logic is implemented in `/root/docker-healthcheck.sh`. The default

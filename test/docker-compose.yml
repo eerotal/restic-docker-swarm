@@ -1,0 +1,50 @@
+version: "3.6"
+
+services:
+  database:
+    image: postgres:latest
+    container_name: database
+
+    restart: unless-stopped
+    init: true
+
+    environment:
+      POSTGRES_PASSWORD: postgres
+
+    volumes:
+      - vol_database:/var/lib/postgresql_data/
+      - vol_database-backup:/tmp/postgresql_backup/
+      - ./postgres-test-init.sh:/docker-entrypoint-initdb.d/postgres-test-init.sh
+
+    labels:
+      - docker-auto-backup.pre-hook=pg_dumpall -U postgres -f /tmp/postgresql_backup/dump.db
+
+  database-backup:
+    image: eerotal/docker-auto-backup:latest
+    build: ../docker-auto-backup/
+    container_name: database-backup
+
+    restart: unless-stopped
+    init: true
+
+    environment:
+      CRON_EXPR: "0 4 * * *"
+      ENABLE_RSYNC: "y"
+      ROTATE_AFTER: 5
+      RSYNC_DEST: $RSYNC_DEST
+      SSH_HOST: $SSH_HOST
+      CONTAINERS: "database"
+
+    volumes:
+      - vol_database-backup:/backup:ro
+      - ./archive/:/archive
+      - ./pubkey.gpg:/root/encryption_key:ro
+      - ~/.ssh/id_rsa:/root/.ssh/ssh_key:ro
+      - ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  vol_database:
+    name: vol_database
+  vol_database-backup:
+    name: vol_database-backup

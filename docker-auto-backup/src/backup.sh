@@ -16,16 +16,49 @@ set -e
 # Load environment from a script because we are running in a cron job.
 . "$ENV_FILE"
 
-# Skip backup if /backup directory is empty.
-if [ -z "$(ls -A $BACKUP_DIR)" ]; then
-    printf "[INFO] Nothing to backup. Skipping...\n"
-    exit 0
-fi
+exec_hooks() {
+    #
+    # Execute hooks in external containers listed in $CONTAINERS.
+    #
+    # This function requires that the Docker socket is mounted into
+    # the docker-auto-backup container. If the socket is not mounted,
+    # this function does nothing.
+    #
+    # $1 = The hook to execute.
+    #
+
+    if [ -e "${DOCKER_SOCK}" ]; then
+        printf "[INFO] Running ${1}.\n"
+
+        for c in $CONTAINERS; do
+            ids="$(docker container ls --filter "name=^$c$" --filter "label=${HOOK_PREFIX}${1}" -q)"
+            printf "[INFO] --> Found $(echo $ids | wc -l) container(s) with hooks.\n"
+
+            for id in $ids; do
+                template="{{ index .Config.Labels  \"${HOOK_PREFIX}${1}\" }}"
+                cmd="$(docker inspect --format "$template" $id)"
+                printf "[INFO] --> Executing '${cmd}' in '${id}'.\n"
+                docker exec $id $cmd
+            done
+        done
+    else
+        printf "[INFO] Skipping ${1} because ${DOCKER_SOCK} doesn't exist.\n"
+    fi
+}
 
 backup_tmp="docker-volume-backup.tar.gz"
 backup_enc="$(date +"%Y-%m-%dT%H-%M-%S").tar.gz.gpg"
 
 printf "[INFO] Backup started at $(date -Iseconds).\n"
+
+# Execute pre-hooks.
+exec_hooks pre-hook
+
+# Skip backup if /backup directory is empty.
+if [ -z "$(ls -A $BACKUP_DIR)" ]; then
+    printf "[INFO] Nothing to backup. Skipping...\n"
+    exit 0
+fi
 
 # Archive files into a .tar.gz archive in a temporary directory.
 cd "$BACKUP_DIR"
@@ -103,5 +136,8 @@ fi
 # Store the last time a backup succeeded. This is used by the
 # periodic Docker healthcheck.
 date +"%s" > "$LAST_BACKUP_FILE"
+
+# Execute post-hooks.
+exec_hooks post-hook
 
 printf "[INFO] Backup done at $(date -Iseconds).\n"
