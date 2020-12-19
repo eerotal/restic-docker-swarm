@@ -30,8 +30,8 @@ RUN sed -i "1s:^:WORKDIR=\"$(pwd)\"\n:" config.sh
 CMD ["sh", "docker-entrypoint.sh"]
 
 HEALTHCHECK \
-    --interval=60s \
+    --interval=86400s \
     --timeout=5s \
     --start-period=1ms \
     --retries=2 \
-    CMD sh docker-healthcheck.sh 120
+    CMD sh docker-healthcheck.sh 86400

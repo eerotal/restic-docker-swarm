@@ -55,7 +55,7 @@ mv -v "$TMP_DIR/$backup_enc" "$ARCHIVE_DIR"
 
 # Rotate locally stored backups.
 printf "[INFO] Rotating locally stored backups.\n"
-python3 "${WORKDIR}/rotate-backups.py" \
+python3 "${WORKDIR}/rotate.py" \
     --dir="$ARCHIVE_DIR" \
     --keep="$ROTATE_AFTER"
 
@@ -65,17 +65,14 @@ if [ "$ENABLE_RSYNC" = "y" ]; then
         printf "[Error] You must mount an SSH key at '$SSH_KEY_FILE'.\n"
         exit 1
     fi
-
     if [ ! -f "$SSH_KNOWN_HOSTS_FILE" ]; then
         printf "[Error] You must mount a known_hosts file at '$SSH_KNOWN_HOSTS_FILE'.\n"
         exit 1
     fi
-
     if [ -z "$SSH_HOST" ]; then
         printf "[Error] You must specify a valid SSH host in SSH_HOST.\n"
         exit 1
     fi
-
     if [ -z "$RSYNC_DEST" ]; then
         printf "[Error] You must specify a rsync destination path in RSYNC_DEST.\n"
         exit 1
@@ -90,16 +87,14 @@ if [ "$ENABLE_RSYNC" = "y" ]; then
 
     export RSYNC_RSH="ssh $SSH_OPTS"
     rsync -aq \
-        "${WORKDIR}/rotate-backups.py" \
+        "${WORKDIR}/rotate.py" \
         "${SSH_HOST}:${RSYNC_DEST}/rb.py"
 
     printf "[INFO] ---- RUNNING IN REMOTE SHELL\n"
-
     ssh $SSH_OPTS "$SSH_HOST" \
         "cd $RSYNC_DEST && " \
         "python3 rb.py -d'${RSYNC_DEST}' -k'${ROTATE_AFTER}' && " \
         "rm -f rb.py"
-
     printf "[INFO] ---- RETURNING TO LOCAL SHELL\n"
 else
     printf "[INFO] Skipping rsync.\n"

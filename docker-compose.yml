@@ -9,19 +9,19 @@ services:
     init: true
 
     environment:
-      CRON_EXPR: "* * * * *"
-      ENABLE_RSYNC: $ENABLE_RSYNC
+      CRON_EXPR: "0 4 * * *"
+      ENABLE_RSYNC: "y"
+      ROTATE_AFTER: 5
       RSYNC_DEST: $RSYNC_DEST
       SSH_HOST: $SSH_HOST
-      ROTATE_AFTER: 5
 
     volumes:
-      - vol_docker-auto-backup-test:/backup:ro
+      - vol_docker-auto-backup:/backup:ro
       - ./archive/:/archive
-      - ./pubkey.gpg:/root/encryption_key
-      - ./id_rsa:/root/.ssh/ssh_key
-      - ./known_hosts:/root/.ssh/known_hosts
+      - ./pubkey.gpg:/root/encryption_key:ro
+      - ./id_rsa:/root/.ssh/ssh_key:ro
+      - ./known_hosts:/root/.ssh/known_hosts:ro
 
 volumes:
-  vol_docker-auto-backup-test:
-    name: vol_docker-auto-backup-test
+  vol_docker-auto-backup:
+    name: vol_docker-auto-backup

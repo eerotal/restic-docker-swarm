@@ -23,5 +23,5 @@ else
     printf "[INFO] Cron expression empty. Won't create cron.d entry.\n"
 fi
 
-printf "[INFO] Start cron.\n"
+printf "[INFO] Starting cron.\n"
 crond -f
