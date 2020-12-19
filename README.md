@@ -24,7 +24,7 @@ the following locations in the container.
 | File                   | Description                                                               |
 |------------------------|---------------------------------------------------------------------------|
 | /archive/              | The directory where the local backups are stored.                         |
-| /backup/               | The directory from where backups are make.                                |
+| /backup/               | The directory from where backups are made.                                |
 | /root/encryption_key   | A GPG public key to use for encrypting backups.                           |
 | /root/.ssh/ssh_key     | An SSH key to use for accessing the remote server.                        |
 | /root/.ssh/known_hosts | An SSH known_hosts file for accepting the signature of the remote server. |
