@@ -11,7 +11,7 @@ set -e
 # Store environment variables in a file so that cron jobs can use them.
 {
 printf "ENABLE_RSYNC='${ENABLE_RSYNC}'\n"
-printf "BACKUP_IDENTIFIER='${BACKUP_IDENTIFIER}'"
+printf "BACKUP_IDENTIFIER='${BACKUP_IDENTIFIER}'\n"
 printf "RSYNC_DEST='${RSYNC_DEST}'\n"
 printf "SSH_HOST='${SSH_HOST}'\n"
 printf "ROTATE_AFTER='${ROTATE_AFTER}'\n"

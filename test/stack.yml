@@ -24,7 +24,7 @@ services:
       CRON_EXPR: "0 4 * * *"
       ENABLE_RSYNC: "n"
       ROTATE_AFTER: 5
-      BACKUP_IDENTIFIER="postgres"
+      BACKUP_IDENTIFIER: "postgres"
 
     volumes:
       - database-backup:/backup:ro
