@@ -14,15 +14,17 @@ services:
 
     labels:
       - docker-auto-backup.pre-hook=pg_dumpall -U postgres -f /tmp/postgresql_backup/dump.db
+      - docker-auto-backup.identifier=postgres
 
   docker-auto-backup:
-    image: eerotal/docker-auto-backup:latest
+    image: eerotal/docker-auto-backup:master
     init: true
 
     environment:
       CRON_EXPR: "0 4 * * *"
       ENABLE_RSYNC: "n"
       ROTATE_AFTER: 5
+      BACKUP_IDENTIFIER="postgres"
 
     volumes:
       - database-backup:/backup:ro

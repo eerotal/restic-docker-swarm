@@ -36,7 +36,7 @@ exec_hooks() {
         f2="label=${LABEL_PREFIX}${1}"
 
         ids="$(docker container ls --filter "$f1" --filter "$f2" -q)"
-        printf "[INFO] --> Found $(echo $ids | wc -l) container(s) with "
+        printf "[INFO] --> Found $(printf "$ids" | wc -l) container(s) with "
         printf "hooks and backup ID: ${BACKUP_IDENTIFIER}.\n"
 
         for id in $ids; do
