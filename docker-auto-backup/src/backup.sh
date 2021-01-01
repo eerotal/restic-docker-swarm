@@ -5,10 +5,6 @@
 # the contents of a Docker volume. This script runs as a cron job.
 #
 
-#
-# TODO: Use Docker labels to dump DB before backing up.
-#
-
 set -e
 
 . /root/config.sh
@@ -18,7 +14,13 @@ set -e
 
 exec_hooks() {
     #
-    # Execute hooks in external containers listed in $CONTAINERS.
+    # Execute hooks in external containers.
+    #
+    # Containers are identifier by two labels:
+    #
+    #   - ${LABEL_PREFIX}.identifier must match ${BACKUP_IDENTIFIER}.
+    #   - ${LABELPREFIX}.${1} must exist. The value of the label is
+    #     the shell command that's executed in the container.
     #
     # This function requires that the Docker socket is mounted into
     # the docker-auto-backup container. If the socket is not mounted,
@@ -30,16 +32,18 @@ exec_hooks() {
     if [ -e "${DOCKER_SOCK}" ]; then
         printf "[INFO] Running ${1}.\n"
 
-        for c in $CONTAINERS; do
-            ids="$(docker container ls --filter "name=^$c$" --filter "label=${HOOK_PREFIX}${1}" -q)"
-            printf "[INFO] --> Found $(echo $ids | wc -l) container(s) with hooks.\n"
+        f1="label=${LABEL_PREFIX}identifier=${BACKUP_IDENTIFIER}"
+        f2="label=${LABEL_PREFIX}${1}"
 
-            for id in $ids; do
-                template="{{ index .Config.Labels  \"${HOOK_PREFIX}${1}\" }}"
-                cmd="$(docker inspect --format "$template" $id)"
-                printf "[INFO] --> Executing '${cmd}' in '${id}'.\n"
-                docker exec $id $cmd
-            done
+        ids="$(docker container ls --filter "$f1" --filter "$f2" -q)"
+        printf "[INFO] --> Found $(echo $ids | wc -l) container(s) with "
+        printf "hooks and backup ID: ${BACKUP_IDENTIFIER}.\n"
+
+        for id in $ids; do
+            template="{{ index .Config.Labels  \"${LABEL_PREFIX}${1}\" }}"
+            cmd="$(docker inspect --format "$template" $id)"
+            printf "[INFO] --> Executing '${cmd}' in '${id}'.\n"
+            docker exec $id $cmd
         done
     else
         printf "[INFO] Skipping ${1} because ${DOCKER_SOCK} doesn't exist.\n"

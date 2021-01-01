@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:latest
+
+    environment:
+      POSTGRES_PASSWORD: postgres
+
+    volumes:
+      - database:/var/lib/postgresql_data/
+      - database-backup:/tmp/postgresql_backup/
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/postgres-init.sh
+
+    labels:
+      - docker-auto-backup.pre-hook=pg_dumpall -U postgres -f /tmp/postgresql_backup/dump.db
+
+  docker-auto-backup:
+    image: eerotal/docker-auto-backup:latest
+    init: true
+
+    environment:
+      CRON_EXPR: "0 4 * * *"
+      ENABLE_RSYNC: "n"
+      ROTATE_AFTER: 5
+
+    volumes:
+      - database-backup:/backup:ro
+      - database-archive:/archive
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    secrets:
+      - ssh-key
+      - ssh-known-hosts
+      - gpg-encryption-key
+
+secrets:
+  ssh-key:
+    name: ssh-key
+    external: true
+  ssh-known-hosts:
+    name: ssh-known-hosts
+    external: true
+  gpg-encryption-key:
+    name: gpg-encryption-key
+    external: true
+
+volumes:
+  database:
+    name: database
+  database-backup:
+    name: database-backup
+  database-archive:
+    name: database-archive
