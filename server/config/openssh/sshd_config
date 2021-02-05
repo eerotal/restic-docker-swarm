@@ -1,0 +1,16 @@
+# SSH hardening.
+ChallengeResponseAuthentication no
+PubkeyAuthentication yes
+PasswordAuthentication no
+AuthenticationMethods publickey
+PermitRootLogin no
+PermitEmptyPasswords no
+AllowUsers restic
+
+# Only allow SFTP.
+#ForceCommand internal-sftp
+#ChrootDirectory /restic
+#PermitTunnel no
+#AllowAgentForwarding no
+#AllowTcpForwarding no
+#X11Forwarding no
