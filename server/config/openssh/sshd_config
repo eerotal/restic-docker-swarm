@@ -8,9 +8,9 @@ PermitEmptyPasswords no
 AllowUsers restic
 
 # Only allow SFTP.
-#ForceCommand internal-sftp
-#ChrootDirectory /restic
-#PermitTunnel no
-#AllowAgentForwarding no
-#AllowTcpForwarding no
-#X11Forwarding no
+ForceCommand internal-sftp
+ChrootDirectory $REPO_DIR
+PermitTunnel no
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no

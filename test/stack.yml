@@ -18,11 +18,11 @@ services:
     environment:
       SSH_HOST: "restic@server"
       SSH_PORT: "2222"
-      REPO_PATH: "/home/restic/repo"
+      REPO_PATH: "/restic/repo"
 
       SERVICE_NAME: "restic_postgres"
       PRE_HOOK: "pg_dumpall -U postgres -f /tmp/postgresql_backup/dump.db"
-      POST_HOOK: ""
+      POST_HOOK: "rm -rf /tmp/postgresql_backup/dump.db"
       RUN_AT: "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
       EXTRA_ARGS: "--verbose"
 
@@ -49,7 +49,7 @@ services:
       - "2222:2222"
 
     volumes:
-      - restic-data:/restic/
+      - restic-data:/restic/repositories/
       - restic-fingerprints:/etc/ssh/host_fingerprints/
 
     secrets:

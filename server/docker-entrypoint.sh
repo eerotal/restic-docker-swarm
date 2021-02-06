@@ -59,6 +59,11 @@ else
     printf "able to access the builtin SSH server.\n"
 fi
 
+printf "[INFO] Creating repository directory: $REPO_DIR\n"
+mkdir -p "$REPO_DIR"
+chown -R "$USER:$USER" "$REPO_DIR"
+chmod -R 640 "$REPO_DIR"
+
 printf "[INFO] Starting sshd.\n"
 /usr/sbin/sshd -D -e -p ${SSHD_PORT} &
 

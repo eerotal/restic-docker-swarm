@@ -1,0 +1,16 @@
+#!/bin/sh
+
+printf "\033[1m"
+printf "\n--- \033[4mrestic-docker-swarm-server\033[1m ---\033[0m\n\n"
+printf "The 'restic' backup utility is installed in this container.\n"
+printf "Run 'restic -h' for help.\n\n"
+
+if [ "$(whoami)" = "root" ]; then
+    printf "Note: You're running as root. Unless you need the permissions,\n"
+    printf "consider changing to the user 'restic' by running 'su restic'.\n\n"
+fi
+
+printf "The builtin SSH server is running on port $SSHD_PORT.\n\n"
+
+printf "Your repositories are located at $REPO_DIR. You\n"
+printf "currently have $(ls "$REPO_DIR" 2>/dev/null | wc -w) repositories.\n\n"

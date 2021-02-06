@@ -15,13 +15,16 @@ import argparse
 import datetime
 import logging
 from typing import List
+
 import docker
+from docker.models.services import Service
 
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] [%(levelname)s]: %(message)s"
 )
 logger = logging.getLogger(__file__)
+
 
 class ResticDockerSwarm:
     """Main restic wrapper class."""
@@ -46,25 +49,12 @@ class ResticDockerSwarm:
         self.backup_path = backup_path
 
         self.restic_args = restic_args
+        self.service_name = service_name
         self.pre_hook = pre_hook
         self.post_hook = post_hook
         self.run_at = run_at
         self.ssh_opts = ssh_opts
         self.ssh_port = ssh_port
-
-        self.service_id = None
-        if service_name is not None:
-            try:
-                self.service_id = self.service_name_to_id(service_name)
-            except Exception as e:
-                logger.error(e)
-                return
-
-            logger.debug(
-                "Service name %s matches ID %s",
-                service_name,
-                self.service_id
-            )
 
     def run(self):
         """Run the backup once or in a loop."""
@@ -90,6 +80,26 @@ class ResticDockerSwarm:
                     last_run = dt
 
                 time.sleep(1)
+
+    @property
+    def service(self) -> Service:
+        """Get the service to be backed up.
+
+        :return: The service object.
+        :rtype: Service
+        """
+
+        if self.service_name:
+            for service in self.docker_client.services.list():
+                if service.name == self.service_name:
+                    logger.debug(
+                        "Service name %s matches ID %s.",
+                        self.service_name,
+                        service.id
+                    )
+                    return service
+
+        return None
 
     @property
     def full_repo(self) -> str:
@@ -138,47 +148,29 @@ class ResticDockerSwarm:
 
         return ret
 
-    def service_name_to_id(self, name: str) -> str:
-        """Get a Swarm service ID by the service name.
-
-        :param str name: The service name.
-
-        :return: The service ID.
-        :rtype: tr
-
-        :raise Exception: If a service with the requested name doesn't exist.
-        """
-
-        for s in self.docker_client.services.list():
-            if s.name == name:
-                return s.id
-
-        raise Exception("No service named {}".format(name))
-
-    def run_in_service(self, service_id: str, cmd: str):
+    def run_in_service(self, service: Service, cmd: str):
         """Run a command in all tasks of a service.
 
-        :param str service_id: The ID of the Service to run the command in.
+        :param Service service: The Service to run the command in.
         :param str cmd: The command to run.
 
         :raises Exception: If 'docker exec' fails.
         :raises Exception: If the service has no running tasks.
         """
 
-        logger.info("Running in Swarm service %s: %s", service_id, cmd)
-        service = self.docker_client.services.get(service_id)
+        logger.info("Running in service %s: %s", service.id, cmd)
         tasks = service.tasks(filters={"desired-state": "Running"})
 
         if len(tasks) > 1:
             logger.info(
                 ("Service %s has multiple tasks. Will only run "
                 "the requested command in one of them."),
-                service_id
+                service.id
             )
         elif len(tasks) == 0:
             raise Exception(
                 "No running tasks in service {}. Unable to run command."
-                .format(service_id)
+                .format(service.id)
             )
 
         cid = tasks[0].get("Status").get("ContainerStatus").get("ContainerID")
@@ -256,10 +248,10 @@ class ResticDockerSwarm:
         self.init_repo()
 
         # Run pre-backup hook.
-        if self.service_id and self.pre_hook:
+        if self.service and self.pre_hook:
             logger.info("Running pre-backup hook.")
             try:
-                self.run_in_service(self.service_id, self.pre_hook)
+                self.run_in_service(self.service, self.pre_hook)
             except Exception as e:
                 logger.error(e)
                 return False
@@ -272,10 +264,10 @@ class ResticDockerSwarm:
             ret = False
 
         # Run post-backup hook.
-        if self.service_id and self.post_hook:
+        if self.service and self.post_hook:
             logger.info("Running post-backup hook.")
             try:
-                self.run_in_service(self.service_id, self.post_hook)
+                self.run_in_service(self.service, self.post_hook)
             except Exception as e:
                 logger.error(e)
                 return False
