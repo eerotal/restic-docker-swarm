@@ -10,7 +10,7 @@ from typing import List
 import docker
 from docker.models.services import Service
 
-from .exceptions import *
+from _internal.exceptions import *
 
 logger = logging.getLogger(__file__)
 
@@ -156,7 +156,7 @@ class ResticWrapper:
                 service.id
             )
         elif len(tasks) == 0:
-            raise Exception(
+            raise SwarmException(
                 "No running tasks in service {}. Unable to run command."
                 .format(service.id)
             )
@@ -164,7 +164,7 @@ class ResticWrapper:
         cid = tasks[0].get("Status").get("ContainerStatus").get("ContainerID")
         container = self.docker_client.containers.get(cid)
         if container.exec_run(cmd)[0] != 0:
-            raise Exception("Failed to execute command.")
+            raise SwarmException("Failed to execute command.")
 
     def run_restic(self, suppress_output, *args):
         """A thin wrapper for running restic commands.
@@ -242,7 +242,7 @@ class ResticWrapper:
             logger.info("Running pre-backup hook.")
             try:
                 self.run_in_service(self.service, self.pre_hook)
-            except Exception as e:
+            except SwarmException as e:
                 logger.error(e)
                 return False
 
@@ -258,7 +258,7 @@ class ResticWrapper:
             logger.info("Running post-backup hook.")
             try:
                 self.run_in_service(self.service, self.post_hook)
-            except Exception as e:
+            except SwarmException as e:
                 logger.error(e)
                 return False
 
