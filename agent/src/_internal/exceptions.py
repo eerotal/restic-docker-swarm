@@ -1,0 +1,2 @@
+class ResticException(Exception):
+    pass

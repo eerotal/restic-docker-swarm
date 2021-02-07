@@ -1,17 +1,8 @@
-"""A simple wrapper for restic.
-
-This script wraps restic to provide support for
-
-  - Scheduled backups.
-  - Pre-backup hooks.
-  - Post-backup hooks.
-
-"""
+"""A wrapper class for running restic."""
 
 import subprocess
 import re
 import time
-import argparse
 import datetime
 import logging
 from typing import List
@@ -19,14 +10,11 @@ from typing import List
 import docker
 from docker.models.services import Service
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] [%(levelname)s]: %(message)s"
-)
+from .exceptions import *
+
 logger = logging.getLogger(__file__)
 
-
-class ResticDockerSwarm:
+class ResticWrapper:
     """Main restic wrapper class."""
 
     def __init__(
@@ -233,8 +221,7 @@ class ResticDockerSwarm:
         try:
             self.run_restic(False, "init")
         except subprocess.CalledProcessError as e:
-            logger.error("Failed to init restic repo.")
-            raise Exception("'restic init' failed.") from e
+            raise ResticException("'restic init' failed.") from e
 
     def backup(self):
         """Backup files with restic and run pre-hooks and post-hooks.
@@ -245,7 +232,10 @@ class ResticDockerSwarm:
 
         ret = True
 
-        self.init_repo()
+        try:
+            self.init_repo()
+        except ResticException:
+            logger.error("Failed to init restic repo.")
 
         # Run pre-backup hook.
         if self.service and self.pre_hook:
@@ -273,98 +263,3 @@ class ResticDockerSwarm:
                 return False
 
         return ret
-
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="docker-auto-backup")
-
-    ap.add_argument(
-        "-s",
-        "--ssh-host",
-        type=str,
-        required=True,
-        help="The restic SSH host to "
-    )
-    ap.add_argument(
-        "-p",
-        "--ssh-port",
-        type=int,
-        default=None,
-        help="The TCP port number of the SSH server."
-    )
-    ap.add_argument(
-        "-o",
-        "--ssh-option",
-        action="append",
-        help="Additional options passed to ssh."
-    )
-    ap.add_argument(
-        "-r",
-        "--repo-path",
-        type=str,
-        required=True,
-        help="The restic repository path on the SSH host."
-    )
-    ap.add_argument(
-        "-n",
-        "--service-name",
-        type=str,
-        default=None,
-        help="The name of the Docker Swarm Service to run hooks in."
-    )
-    ap.add_argument(
-        "-a",
-        "--pre-hook",
-        type=str,
-        default=None,
-        help="The pre-backup hook to run."
-    )
-    ap.add_argument(
-        "-b",
-        "--post-hook",
-        type=str,
-        default=None,
-        help="The post-backup hook to run."
-    )
-    ap.add_argument(
-        "-t",
-        "--run-at",
-        type=str,
-        default=None,
-        help="A regex that matches an ISO datetime when backups are taken."
-    )
-    ap.add_argument(
-        "-v",
-        "--verbose",
-        action='store_true',
-        help="Print verbose output."
-    )
-    ap.add_argument(
-        "-e",
-        "--restic-arg",
-        type=str,
-        action="append",
-        help="Pass an argument to restic."
-    )
-    ap.add_argument(
-        "backup_path",
-        type=str,
-        help="The directory to backup."
-    )
-    args = ap.parse_args()
-
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-
-    rds = ResticDockerSwarm(
-        args.ssh_host,
-        args.repo_path,
-        args.backup_path,
-        restic_args=args.restic_arg,
-        service_name=args.service_name,
-        pre_hook=args.pre_hook,
-        post_hook=args.post_hook,
-        run_at=args.run_at,
-        ssh_opts=args.ssh_option,
-        ssh_port=args.ssh_port
-    )
-    rds.run()

@@ -18,7 +18,7 @@ services:
     environment:
       SSH_HOST: "restic@server"
       SSH_PORT: "2222"
-      REPO_PATH: "/restic/repo"
+      REPO_PATH: "postgres"
 
       SERVICE_NAME: "restic_postgres"
       PRE_HOOK: "pg_dumpall -U postgres -f /tmp/postgresql_backup/dump.db"
