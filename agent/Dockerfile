@@ -29,6 +29,6 @@ RUN adduser -D -u $USER_UID $USER
 WORKDIR /home/$USER
 
 COPY docker-entrypoint.sh .
-COPY src/ .
+COPY src/ rds/
 
 CMD ["sh", "docker-entrypoint.sh"]

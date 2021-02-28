@@ -49,7 +49,7 @@ services:
       - "2222:2222"
 
     volumes:
-      - restic-data:/restic/repositories/
+      - restic-data:/home/restic/repositories/
       - restic-fingerprints:/etc/ssh/host_fingerprints/
 
     secrets:

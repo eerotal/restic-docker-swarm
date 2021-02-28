@@ -9,7 +9,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] [%(levelname)s]: %(message)s"
 )
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__package__)
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="restic-docker-swarm")

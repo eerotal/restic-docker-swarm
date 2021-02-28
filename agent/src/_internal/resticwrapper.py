@@ -149,6 +149,12 @@ class ResticWrapper:
         logger.info("Running in service %s: %s", service.id, cmd)
         tasks = service.tasks(filters={"desired-state": "Running"})
 
+        logger.info(
+            "Service %s tasks: %s",
+            service.id,
+            ", ".join([t.get("ID") for t in tasks])
+        )
+
         if len(tasks) > 1:
             logger.info(
                 ("Service %s has multiple tasks. Will only run "
@@ -166,7 +172,7 @@ class ResticWrapper:
         if container.exec_run(cmd)[0] != 0:
             raise SwarmException("Failed to execute command.")
 
-    def run_restic(self, suppress_output, *args):
+    def run_restic(self, output: bool, *args):
         """A thin wrapper for running restic commands.
 
         All varargs are passed to the restic command after
@@ -174,28 +180,22 @@ class ResticWrapper:
         subprocess.run(). The return value of subprocess.run()
         is returned by this method.
 
-        :param bool suppress_output: Redirect command output to /dev/null.
+        :param bool output: Print output of subprocess. If the current
+                            logging level is logging.DEBUG, this argument
+                            is ignored and output is always printed.
         """
+        output = output or logger.level <= logging.DEBUG
 
         cmd = self.restic_default_cmd
         cmd.extend(args)
         logger.debug("Exec: %s", " ".join(cmd))
 
-        sp_kwargs = {
-            "stdout": subprocess.PIPE,
-            "stdin": subprocess.PIPE,
-            "stderr": subprocess.PIPE
-        }
-
-        if suppress_output:
-            sp_kwargs["stdout"] = subprocess.DEVNULL
-            sp_kwargs["stderr"] = subprocess.DEVNULL
-
         return subprocess.run(
             " ".join(cmd),
             check=True,
             shell=True,
-            **sp_kwargs
+            stdout=(None if output else subprocess.DEVNULL),
+            stderr=(None if output else subprocess.DEVNULL)
         )
 
     def init_repo(self):
@@ -210,7 +210,7 @@ class ResticWrapper:
             self.full_repo
         )
         try:
-            self.run_restic(True, "cat", "config")
+            self.run_restic(False, "cat", "config")
             logger.debug("Restic repo already exists.")
             return
         except subprocess.CalledProcessError:
@@ -219,7 +219,7 @@ class ResticWrapper:
         # Initilize the repo if it doesn't exist.
         logger.debug("Creating repository %s.", self.full_repo)
         try:
-            self.run_restic(False, "init")
+            self.run_restic(True, "init")
         except subprocess.CalledProcessError as e:
             raise ResticException("'restic init' failed.") from e
 
@@ -234,8 +234,9 @@ class ResticWrapper:
 
         try:
             self.init_repo()
-        except ResticException:
-            logger.error("Failed to init restic repo.")
+        except ResticException as e:
+            logger.error("Failed to init restic repo: {}".format(e))
+            return False
 
         # Run pre-backup hook.
         if self.service and self.pre_hook:
@@ -248,7 +249,7 @@ class ResticWrapper:
 
         # Backup.
         try:
-            self.run_restic(False, "backup", self.backup_path)
+            self.run_restic(True, "backup", self.backup_path)
         except subprocess.CalledProcessError as e:
             logger.error("Restic returned error code: %s", e.returncode)
             ret = False

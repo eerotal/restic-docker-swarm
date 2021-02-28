@@ -12,5 +12,5 @@ fi
 
 printf "The builtin SSH server is running on port $SSHD_PORT.\n\n"
 
-printf "Your repositories are located at $REPO_DIR. You\n"
-printf "currently have $(ls "$REPO_DIR" 2>/dev/null | wc -w) repositories.\n\n"
+printf "Your repositories are located at $HOME_DIR. You\n"
+printf "currently have $(ls -d "$HOME_DIR"/*/ 2>/dev/null | wc -w) repositories.\n\n"
