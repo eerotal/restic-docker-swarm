@@ -3,12 +3,16 @@
 import subprocess
 import re
 import time
-import datetime
+from datetime import datetime
 import logging
 from typing import List
 
 import docker
 from docker.models.services import Service
+
+from croniter import croniter
+from croniter import CroniterBadCronError
+import pause
 
 from _internal.exceptions import *
 
@@ -50,24 +54,22 @@ class ResticWrapper:
         if not self.run_at:
             self.backup()
         else:
-            last_run = ""
+            base = datetime.now()
+
+            try:
+                criter = croniter(self.run_at, base)
+            except CroniterBadCronError as e:
+                logger.error(e)
+                return
+
             while True:
-                dt = datetime.datetime \
-                             .now() \
-                             .replace(second=0, microsecond=0) \
-                             .isoformat()
+                pause.until(criter.get_next(datetime))
 
-                if dt != last_run and re.match(self.run_at, dt):
-                    logger.info("Backup started.")
-
-                    if self.backup():
-                        logger.info("Backup finished.")
-                    else:
-                        logger.info("Backup failed.")
-
-                    last_run = dt
-
-                time.sleep(1)
+                logger.info("Starting backup.")
+                if self.backup():
+                    logger.info("Backup finished.")
+                else:
+                    logger.info("Backup failed.")
 
     @property
     def service(self) -> Service:
