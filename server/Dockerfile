@@ -6,11 +6,11 @@ LABEL license="BSD 3-clause license"
 LABEL copyright="Copyright 2020 Eero Talus"
 
 ENV SSHD_PORT="2222"
+
+# Not intended to be changed by users.
 ENV USER="restic"
 ENV USER_UID="1000"
-
 ENV HOME_DIR="/home/$USER"
-ENV REPO_DIR="$HOME_DIR/repositories/"
 
 USER root
 WORKDIR /root
