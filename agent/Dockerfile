@@ -35,4 +35,13 @@ WORKDIR /home/$USER
 COPY docker-entrypoint.sh .
 COPY src/ rds/
 
+# Symlink restic.py to /usr/local/bin/runrestic so that it's easy to
+# execute with docker exec.
+RUN chmod +x rds/runrestic.py && \
+    ln -s $(realpath rds/runrestic.py) /usr/local/bin/runrestic
+
+# Add a custom shell profile script.
+COPY config/ash/ashrc "$HOME_DIR/.ashrc"
+ENV ENV="$HOME_DIR/.ashrc"
+
 CMD ["sh", "docker-entrypoint.sh"]

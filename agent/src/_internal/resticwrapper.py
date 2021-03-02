@@ -15,6 +15,7 @@ from croniter import CroniterBadCronError
 import pause
 
 from _internal.exceptions import *
+from _internal.resticutils import ResticUtils
 
 logger = logging.getLogger(__file__)
 
@@ -92,51 +93,16 @@ class ResticWrapper:
         return None
 
     @property
-    def full_repo(self) -> str:
-        """Get the full repository address.
-
-        :return: The full repository address string.
-        :rtype: str
-        """
-
-        return "sftp:{}:{}".format(self.ssh_host, self.repo_path)
-
-    @property
-    def ssh_cmd(self):
-        """Build the SSH command used by restic.
-
-        :return: The SSH command as a list of strings.
-        :rtype: List[str]
-        """
-
-        ssh_cmd = ["ssh", self.ssh_host]
-        ssh_cmd.extend(self.ssh_opts)
-
-        if self.ssh_port is not None:
-            ssh_cmd.extend(["-p", str(self.ssh_port)])
-
-        ssh_cmd.extend(["-s", "sftp"])
-
-        return ssh_cmd
-
-    @property
     def restic_default_cmd(self) -> List[str]:
-        """Get the default restic command template.
+        """Get the default restic command."""
 
-        :return: A command template as a list of strings.
-        :rtype: List[str]
-        """
-
-        ret = [
-            "restic",
-            "-o", "sftp.command='{}'".format(" ".join(self.ssh_cmd)),
-            "-r", self.full_repo
-        ]
-
-        if self.restic_args is not None:
-            ret.extend(self.restic_args)
-
-        return ret
+        return ResticUtils.restic_default_cmd(
+            self.ssh_host,
+            self.ssh_port,
+            self.repo_path,
+            self.ssh_opts,
+            self.restic_args
+        )
 
     def run_in_service(self, service: Service, cmd: str):
         """Run a command in all tasks of a service.
@@ -209,7 +175,7 @@ class ResticWrapper:
         # Check whether the repo already exists.
         logger.debug(
             "Checking whether the repository %s exists.",
-            self.full_repo
+            ResticUtils.full_repo(self.ssh_host, self.repo_path)
         )
         try:
             self.run_restic(False, "cat", "config")
@@ -219,7 +185,10 @@ class ResticWrapper:
             logger.debug("Restic repository doesn't exist.")
 
         # Initilize the repo if it doesn't exist.
-        logger.debug("Creating repository %s.", self.full_repo)
+        logger.debug(
+            "Creating repository %s.",
+            ResticUtils.full_repo(self.ssh_host, self.repo_path)
+        )
         try:
             self.run_restic(True, "init")
         except subprocess.CalledProcessError as e:
