@@ -33,5 +33,5 @@ python3 rds/rds.py \
     --pre-hook="${PRE_HOOK}" \
     --post-hook="${POST_HOOK}" \
     --run-at="${RUN_AT}" \
-    "${EXTRA_ARGS}" \
+    ${EXTRA_ARGS} \
     "${BACKUP_PATH}"

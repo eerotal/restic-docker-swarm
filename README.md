@@ -49,9 +49,10 @@ environment variables.
 3. The remote path can also be relative. In that case it's relative to the
    default login path on the SSH server.
 4. The service name must be complete, ie. remember to include the stack name
-   if you start your services using a Swarm stack.
+   if you start your services using a Swarm stack. You can omit this if you don't
+   need hook commands for the service.
 5. The `*_HOOK` commands are only run in one of the service's containers
-   even if there are multiple replicas. Leave these empty if not needed.
+   even if there are multiple replicas. Omit these if not needed.
 6. The `*_FILE` variables are paths to the respective files inside the container.
    You can use these to configure eg. paths to secrets but usually the defaults
    should work fine.
