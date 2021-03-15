@@ -11,7 +11,8 @@ restic repositories remotely via SFTP.
 ## Images
 
 Docker images are available on Docker Hub:
-[eerotal/restic-docker-swarm](https://hub.docker.com/repository/docker/eerotal/restic-docker-swarm).
+[eerotal/restic-docker-swarm-agent](https://hub.docker.com/repository/docker/eerotal/restic-docker-swarm-agent)
+and [eerotal/restic-docker-swarm-server](https://hub.docker.com/repository/docker/eerotal/restic-docker-swarm-server).
 
 ## Usage
 
