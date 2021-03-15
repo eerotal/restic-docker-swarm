@@ -3,8 +3,8 @@
 `restic-docker-swarm` is a utility Docker image for automating Docker
 volume backups to remote directories using *restic*.
 
-`restic-docker-swarm` consists of two container images: `restic-docker-swarm:agent`
-and `restic-docker-swarm:server`. The agent container periodically runs restic to backup
+`restic-docker-swarm` consists of two container images: `restic-docker-swarm-agent`
+and `restic-docker-swarm-server`. The agent container periodically runs restic to backup
 Docker volumes. The server container runs an OpenSSH server which can be used to store the
 restic repositories remotely via SFTP.
 
@@ -24,7 +24,7 @@ file is the best way to get started.
 
 ## Agent configuration
 
-The `restic-docker-swarm:agent` image can be configured with the following
+The `restic-docker-swarm-agent` image can be configured with the following
 environment variables.
 
 | Variable                  | Default                             | Description                                                  |
@@ -45,7 +45,7 @@ environment variables.
 **Notes:**
 
 1. You can use the name of the server service here if you're also running it
-   as a Swarm service (eg. using `restic-docker-swarm:server`).
+   as a Swarm service (eg. using `restic-docker-swarm-server`).
 2. You normally don't need to change the backup path.
 3. The remote path can also be relative. In that case it's relative to the
    default login path on the SSH server.
@@ -86,7 +86,7 @@ After doing this you can launch all agent containers which use manually created 
 
 ## Server configuration
 
-The `restic-docker-swarm:server` image can be configured with the following
+The `restic-docker-swarm-server` image can be configured with the following
 environment variables.
 
 | Variable                  | Default                             | Description                                                  |
@@ -99,7 +99,7 @@ across container reboots.
 
 ## Agent CLI usage
 
-The `restic-docker-swarm:agent` image includes the restic binary which you can
+The `restic-docker-swarm-agent` image includes the restic binary which you can
 use to manage your restic repositories, manually take backups, restore backups etc.
 
 You can access the container by running
@@ -123,7 +123,7 @@ The agent container shell also prints some convenient help information on login.
 
 ## Server CLI usage
 
-The `restic-docker-swarm:server` image includes the restic binary which you can
+The `restic-docker-swarm-server` image includes the restic binary which you can
 use to manage your restic repositories, manually take backups, restore backups etc.
 Restic repositories are stored at `/home/restic` by default.
 
