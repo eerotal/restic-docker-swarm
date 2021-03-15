@@ -137,7 +137,10 @@ class ResticWrapper:
 
         cid = tasks[0].get("Status").get("ContainerStatus").get("ContainerID")
         container = self.docker_client.containers.get(cid)
-        if container.exec_run(cmd)[0] != 0:
+
+        ret = container.exec_run(cmd)
+        logger.info("Output from container:\n\n%s", ret.output.decode("utf-8"))
+        if ret.exit_code != 0:
             raise SwarmException("Failed to execute command.")
 
     def run_restic(self, output: bool, *args):
@@ -156,7 +159,7 @@ class ResticWrapper:
 
         cmd = self.restic_default_cmd
         cmd.extend(args)
-        logger.debug("Exec: %s", " ".join(cmd))
+        logger.info("Exec: %s", " ".join(cmd))
 
         return subprocess.run(
             " ".join(cmd),

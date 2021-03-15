@@ -13,7 +13,7 @@ services:
       - ./postgres-init.sh:/docker-entrypoint-initdb.d/postgres-init.sh
 
   agent:
-    image: eerotal/restic-docker-swarm-agent:latest
+    image: eerotal/restic-docker-swarm-agent:test
 
     environment:
       SSH_HOST: "restic@server"
@@ -40,7 +40,7 @@ services:
       - restic-repo-password
 
   server:
-    image: eerotal/restic-docker-swarm-server:latest
+    image: eerotal/restic-docker-swarm-server:test
 
     environment:
       SWARM_SERVICE: "server"
@@ -57,13 +57,13 @@ services:
 
 secrets:
   restic-ssh-privkey:
-    name: restic-ssh-privkey_v1
+    name: restic-ssh-privkey_v0
     external: true
   restic-ssh-pubkey:
-    name: restic-ssh-pubkey_v1
+    name: restic-ssh-pubkey_v0
     external: true
   restic-repo-password:
-    name: restic-repo-password_v1
+    name: restic-repo-password_v0
     external: true
 
 volumes:

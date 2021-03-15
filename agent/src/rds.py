@@ -91,6 +91,8 @@ if __name__ == "__main__":
 
     if args.verbose:
         logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
     rds = ResticWrapper(
         args.ssh_host,
