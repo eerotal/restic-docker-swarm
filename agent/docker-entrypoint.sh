@@ -22,7 +22,6 @@ printf "[INFO] Waiting 5s before starting the backup daemon.\n"
 sleep 5
 
 python3 rds/rds.py \
-    --verbose \
     --ssh-host="${SSH_HOST}" \
     --ssh-port="${SSH_PORT}" \
     --ssh-option="-o UserKnownHostsFile=${SSH_KNOWN_HOSTS_FILE}" \

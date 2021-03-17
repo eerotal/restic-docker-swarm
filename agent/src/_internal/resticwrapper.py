@@ -17,7 +17,7 @@ import pause
 from _internal.exceptions import *
 from _internal.resticutils import ResticUtils
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 class ResticWrapper:
     """Main restic wrapper class."""
@@ -139,7 +139,11 @@ class ResticWrapper:
         container = self.docker_client.containers.get(cid)
 
         ret = container.exec_run(cmd)
-        logger.info("Output from container:\n\n%s", ret.output.decode("utf-8"))
+
+        output = ret.output.decode("utf-8")
+        if output != "" and not output.isspace():
+            logger.info("Output from container:\n\n%s\n", output)
+
         if ret.exit_code != 0:
             raise SwarmException("Failed to execute command.")
 
@@ -155,19 +159,26 @@ class ResticWrapper:
                             logging level is logging.DEBUG, this argument
                             is ignored and output is always printed.
         """
-        output = output or logger.level <= logging.DEBUG
+        output = output or logger.getEffectiveLevel() <= logging.DEBUG
 
         cmd = self.restic_default_cmd
         cmd.extend(args)
-        logger.info("Exec: %s", " ".join(cmd))
 
-        return subprocess.run(
-            " ".join(cmd),
-            check=True,
-            shell=True,
-            stdout=(None if output else subprocess.DEVNULL),
-            stderr=(None if output else subprocess.DEVNULL)
-        )
+        if not output:
+            return subprocess.run(
+                " ".join(cmd),
+                check=True,
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        else:
+            logger.info("Exec: %s", " ".join(cmd))
+            return subprocess.run(
+                " ".join(cmd),
+                check=True,
+                shell=True
+            )
 
     def init_repo(self):
         """Initialize the restic repository if it doesn't exist.
