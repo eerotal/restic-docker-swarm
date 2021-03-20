@@ -7,17 +7,11 @@ LABEL copyright="Copyright 2020 Eero Talus"
 
 ENV SSH_HOST=""
 ENV SSH_PORT="2222"
-ENV BACKUP_PATH="/backup"
-ENV REPO_PATH=""
-
-ENV SERVICE_NAME=""
-ENV PRE_HOOK=""
-ENV POST_HOOK=""
-ENV RUN_AT=""
-
 ENV SSH_PRIVKEY_FILE="/run/secrets/restic-ssh-privkey"
 ENV SSH_KNOWN_HOSTS_FILE="/run/secrets/restic-ssh-known-hosts"
 ENV RESTIC_REPO_PASSWORD_FILE="/run/secrets/restic-repo-password"
+
+ENV BACKUP_BASE="/backup"
 
 # Not intended to be changed by users.
 ENV USER="restic"

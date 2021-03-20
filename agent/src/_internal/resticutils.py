@@ -1,6 +1,8 @@
 """Utility methods for controlling restic."""
 
-from typing import List
+from typing import List, Optional
+
+from docker.models.services import Service
 
 class ResticUtils:
     @classmethod
@@ -39,7 +41,7 @@ class ResticUtils:
         return ssh_cmd
 
     @classmethod
-    def restic_default_cmd(
+    def restic_cmd(
         cls,
         host: str,
         port: str,
@@ -47,7 +49,7 @@ class ResticUtils:
         ssh_opts: List[str],
         restic_args: List[str]
     ) -> List[str]:
-        """Get the default restic command.
+        """Build a restic command.
 
         :param str host: The SSH host.
         :param str port: The SSH port number.
@@ -69,3 +71,23 @@ class ResticUtils:
             ret.extend(restic_args)
 
         return ret
+
+    @staticmethod
+    def service_should_backup(s: Service) -> Optional[bool]:
+        return s.attrs.get("Spec").get("Labels").get("rds.backup") == "true"
+
+    @staticmethod
+    def service_cron_line(s: Service) -> Optional[str]:
+        return s.attrs.get("Spec").get("Labels").get("rds.run-at")
+
+    @staticmethod
+    def service_repo_name(s: Service) -> Optional[str]:
+        return s.attrs.get("Spec").get("Labels").get("rds.repo")
+
+    @staticmethod
+    def service_pre_hook(s: Service) -> Optional[str]:
+        return s.attrs.get("Spec").get("Labels").get("rds.pre-hook")
+
+    @staticmethod
+    def service_post_hook(s: Service) -> Optional[str]:
+        return s.attrs.get("Spec").get("Labels").get("rds.post-hook")

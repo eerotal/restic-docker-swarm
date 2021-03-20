@@ -6,7 +6,8 @@ volume backups to remote directories using *restic*.
 `restic-docker-swarm` consists of two container images: `restic-docker-swarm-agent`
 and `restic-docker-swarm-server`. The agent container periodically runs restic to backup
 Docker volumes. The server container runs an OpenSSH server which can be used to store the
-restic repositories remotely via SFTP.
+restic repositories remotely via SFTP. You can also use a normal SSH server as the remote
+in which case you don't need to deploy the server image at all.
 
 ## Images
 
@@ -18,50 +19,54 @@ and [eerotal/restic-docker-swarm-server](https://hub.docker.com/repository/docke
 
 A example Swarm stack file `test/stack.yml` is provided in this repository. In a
 nutshell, you must configure the containers to your liking using environment
-variables, volume mounts and Docker secrets. See the sections below for information
-on how the agent and server images are configured. Following the example stack
-file is the best way to get started.
+variables, service labels, volume mounts and Docker secrets. See the sections below
+for information on how the agent and server images are configured. Using the stack file
+from `test/stack.yml` as an example is the best way to get started.
 
 ## Agent configuration
 
-The `restic-docker-swarm-agent` image can be configured with the following
+The `restic-docker-swarm-agent` container can be configured with the following
 environment variables.
 
 | Variable                  | Default                             | Description                                                  |
 |---------------------------|-------------------------------------|--------------------------------------------------------------|
 | SSH_HOST                  |                                     | Name that resolves to the remote SSH host. *1                |
 | SSH_PORT                  | 2222                                | SSH port used by the remote host.                            |
-| BACKUP_PATH               | /backup                             | The path in the container from which backups are taken. *2   |
-| REPO_PATH                 |                                     | Repository path on the remote host. *3                       |
-| SERVICE_NAME              |                                     | The name of the service to backup. *4                        |
-| PRE_HOOK                  |                                     | A command to run in the service before backup. *5            |
-| POST_HOOK                 |                                     | A command to run in the service after backup. *5             |
-| RUN_AT                    |                                     | A cron expression that sets when backups should be taken.    |
-| SSH_PRIVKEY_FILE          | /run/secrets/restic-ssh-privkey     | A path to the SSH identity file in the container. *6         |
-| SSH_KNOWN_HOSTS_FILE      | /run/secrets/restic-ssh-known-hosts | A path to the SSH known hosts file in the container. *6      |
-| RESTIC_REPO_PASSWORD_FILE | /run/secrets/restic-repo-password   | A path to the restic repo password file in the container. *6 |
-| EXTRA_ARGS                |                                     | Extra arguments passed to the internal rds.py program. *7    |
+| SSH_PRIVKEY_FILE          | /run/secrets/restic-ssh-privkey     | A path to the SSH identity file in the container. *2         |
+| SSH_KNOWN_HOSTS_FILE      | /run/secrets/restic-ssh-known-hosts | A path to the SSH known hosts file in the container. *2      |
+| RESTIC_REPO_PASSWORD_FILE | /run/secrets/restic-repo-password   | A path to the restic repo password file in the container. *2 |
+| EXTRA_ARGS                |                                     | Extra arguments passed to the internal rds.py program. *3    |
 
 **Notes:**
 
 1. You can use the name of the server service here if you're also running it
    as a Swarm service (eg. using `restic-docker-swarm-server`).
-2. You normally don't need to change the backup path.
-3. The remote path can also be relative. In that case it's relative to the
-   default login path on the SSH server.
-4. The service name must be complete, ie. remember to include the stack name
-   if you start your services using a Swarm stack. You can omit this if you don't
-   need hook commands for the service.
-5. The `*_HOOK` commands are only run in one of the service's containers
-   even if there are multiple replicas. Omit these if not needed.
-6. The `*_FILE` variables are paths to the respective files inside the container.
+2. The `*_FILE` variables are paths to the respective files inside the container.
    You can use these to configure eg. paths to secrets but usually the defaults
    should work fine.
-7. Take a look into the source repository for more information. For example, you
+3. Take a look into the source repository for more information. For example, you
    can pass `--verbose` in `EXTRA_ARGS` for more verbose logs but usually this
    variable is not needed.
 
-You should mount the volume you want to backup at `BACKUP_PATH`.
+Each service you want to back up should define the following **service** labels.
+
+| Label         | Description                                        |
+|---------------|----------------------------------------------------|
+| rds.backup    | "true" to enable backups.                          |
+| rds.repo      | Repository path. *1                                |
+| rds.run-at    | Cron expression for taking backups.                |
+| rds.pre-hook  | Pre-backup hook command to run in the service. *2  |
+| rds.post-hook | Post-backup hook command to run in the service. *2 |
+
+**Notes:**
+
+1. The `rds.repo-path` label sets the repository path on the remote SFTP server as well
+   as the backup path in the agent container. This path should always be relative.
+   For example, if you set `rds.repo: my-volume`, the backups will be stored on
+   the remote server in `my-volume` under the default SFTP directory. The backups
+   will also be taken from `/backup/my-volume/` in the `restic-docker-swarm-agent`
+   container meaning you must mount your volume at this path.
+2. See the section Pre- and post-backup hooks.
 
 Secrets are passed to the container using Docker Swarm secrets. The following
 secrets are required
@@ -138,14 +143,14 @@ on login.
 
 ## Pre- and post-backup hooks
 
-The agent container can run hook commands before and after backups. Hook
-commands are only run in a single container of the target service even if the
-service has multiple replicas.
+The pre- and post-backup hooks are executed in a service container before and
+after backup respectively. Even if a service has multiple replicas (ie. multiple
+containers), the hooks are only run in one container. The container where hooks
+are run is not guaranteed to be the same between backups.
 
-The commands to run are set using the `PRE_HOOK` and `POST_HOOK` environment
-variables. The `SERVICE_NAME` variable should contain the name of the Swarm
-service from which the backup is taken. Remember to use the full name of
-the service, ie. also include the stack name prefix if applicable.
+A hook must be a single shell command. If you need to run a script, wrap the
+script in `sh -c '...'` or put a script file directly into the container image
+and execute that instead. The latter approach should be preferred.
 
 Hooks are useful for example when backing up a database. You can dump the
 database to a file in a pre-backup hook and delete the database dump in a

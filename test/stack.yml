@@ -12,26 +12,25 @@ services:
       - database-backup:/tmp/postgresql_backup/
       - ./postgres-init.sh:/docker-entrypoint-initdb.d/postgres-init.sh
 
-  agent:
+    deploy:
+      labels:
+        rds.backup: "true"
+        rds.repo: "postgres"
+        rds.run-at: "* * * * *"
+        rds.pre-hook: "pg_dumpall -U postgres -f /tmp/postgresql_backup/dump.db"
+        rds.post-hook: "rm -rf /tmp/postgresql_backup/dump.db"
+
+  rds-agent:
     image: eerotal/restic-docker-swarm-agent:test
 
     environment:
       SSH_HOST: "restic@server"
       SSH_PORT: "2222"
-      REPO_PATH: "postgres"
-
-      SERVICE_NAME: "restic_postgres"
-      PRE_HOOK: "pg_dumpall -U postgres -f /tmp/postgresql_backup/dump.db"
-      POST_HOOK: "rm -rf /tmp/postgresql_backup/dump.db"
-      RUN_AT: "* * * * *"
       EXTRA_ARGS: "--verbose"
-
       SSH_KNOWN_HOSTS_FILE: /root/host_fingerprints/known_hosts
 
-
     volumes:
-      - database-backup:/backup:ro
-      - database-archive:/archive
+      - database-backup:/backup/postgres/:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - restic-fingerprints:/root/host_fingerprints/
 
@@ -39,7 +38,7 @@ services:
       - restic-ssh-privkey
       - restic-repo-password
 
-  server:
+  rds-server:
     image: eerotal/restic-docker-swarm-server:test
 
     environment:
@@ -71,8 +70,6 @@ volumes:
     name: database
   database-backup:
     name: database-backup
-  database-archive:
-    name: database-archive
   restic-data:
     name: restic-data
   restic-fingerprints:

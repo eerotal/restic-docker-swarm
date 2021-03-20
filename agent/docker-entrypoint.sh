@@ -22,15 +22,11 @@ printf "[INFO] Waiting 5s before starting the backup daemon.\n"
 sleep 5
 
 python3 rds/rds.py \
+    --backup-base="${BACKUP_BASE}" \
     --ssh-host="${SSH_HOST}" \
     --ssh-port="${SSH_PORT}" \
     --ssh-option="-o UserKnownHostsFile=${SSH_KNOWN_HOSTS_FILE}" \
     --ssh-option="-i /home/${USER}/.ssh/id" \
-    --repo-path="${REPO_PATH}" \
     --restic-arg="--password-file=${RESTIC_REPO_PASSWORD_FILE}" \
-    --service-name="${SERVICE_NAME}" \
-    --pre-hook="${PRE_HOOK}" \
-    --post-hook="${POST_HOOK}" \
-    --run-at="${RUN_AT}" \
     ${EXTRA_ARGS} \
     "${BACKUP_PATH}"

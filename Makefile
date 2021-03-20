@@ -25,7 +25,7 @@ rm-test:
 	docker stack rm restic
 
 logs-agent:
-	docker service logs restic_agent
+	docker service logs restic_rds-agent
 
 logs-server:
-	docker service logs restic_server
+	docker service logs restic_rds-server
