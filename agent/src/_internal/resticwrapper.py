@@ -167,6 +167,14 @@ class ResticWrapper:
                 return
 
         for r in repos:
+            if os.path.isabs(r):
+                logger.error(
+                    "Absolute repository path %s in service %s. Skipping!",
+                    r,
+                    service.name
+                )
+                continue
+
             # Initialize the repository.
             logger.info("Initializing repo %s.", r)
             try:
