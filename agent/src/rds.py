@@ -3,7 +3,10 @@
 import logging
 import argparse
 
+import docker
+
 from _internal.resticwrapper import ResticWrapper
+from _internal.backupscheduler import BackupScheduler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -66,11 +69,19 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
 
+    docker_client = docker.from_env()
+
     rds = ResticWrapper(
+        docker_client,
         args.ssh_host,
         args.backup_base,
         restic_args=args.restic_arg,
         ssh_opts=args.ssh_option,
         ssh_port=args.ssh_port
     )
-    rds.run()
+
+    backupscheduler = BackupScheduler(
+        docker_client,
+        rds.backup
+    )
+    backupscheduler.run()

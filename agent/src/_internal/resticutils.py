@@ -19,7 +19,12 @@ class ResticUtils:
         return "sftp:{}:{}".format(host, repo)
 
     @classmethod
-    def ssh_cmd(cls, host: str, port: str, opts: List[str]) -> List[str]:
+    def ssh_cmd(
+        cls,
+        host: str,
+        port: str,
+        opts: Optional[List[str]]
+    ) -> List[str]:
         """Build an SSH command used by restic.
 
         :param str host: The SSH host.
@@ -31,7 +36,9 @@ class ResticUtils:
         """
 
         ssh_cmd = ["ssh", host]
-        ssh_cmd.extend(opts)
+
+        if opts is not None:
+            ssh_cmd.extend(opts)
 
         if port is not None:
             ssh_cmd.extend(["-p", str(port)])
