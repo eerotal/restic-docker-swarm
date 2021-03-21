@@ -53,19 +53,21 @@ Each service you want to back up should define the following **service** labels.
 | Label         | Description                                        |
 |---------------|----------------------------------------------------|
 | rds.backup    | "true" to enable backups.                          |
-| rds.repo      | Repository path. *1                                |
+| rds.repos     | Repository paths. *1                               |
 | rds.run-at    | Cron expression for taking backups.                |
 | rds.pre-hook  | Pre-backup hook command to run in the service. *2  |
 | rds.post-hook | Post-backup hook command to run in the service. *2 |
 
 **Notes:**
 
-1. The `rds.repo-path` label sets the repository path on the remote SFTP server as well
-   as the backup path in the agent container. This path should always be relative.
-   For example, if you set `rds.repo: my-volume`, the backups will be stored on
+1. The `rds.repos` label sets the repository path(s) on the remote SFTP server as well
+   as the backup path(s) in the agent container. Repo paths should always be relative.
+   For example, if you set `rds.repos: my-volume`, the backups will be stored on
    the remote server in `my-volume` under the default SFTP directory. The backups
    will also be taken from `/backup/my-volume/` in the `restic-docker-swarm-agent`
-   container meaning you must mount your volume at this path.
+   container meaning you must mount your volume at this path. You can also specify
+   multiple repositories as a comma separated list. This is useful for example
+   if you want to backup multiple volumes from a single service.
 2. See the section Pre- and post-backup hooks.
 
 Secrets are passed to the container using Docker Swarm secrets. The following

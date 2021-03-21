@@ -1,6 +1,6 @@
 """Utility methods for controlling restic."""
 
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from docker.models.services import Service
 
@@ -88,8 +88,9 @@ class ResticUtils:
         return s.attrs.get("Spec").get("Labels").get("rds.run-at")
 
     @staticmethod
-    def service_repo_name(s: Service) -> Optional[str]:
-        return s.attrs.get("Spec").get("Labels").get("rds.repo")
+    def service_repo_names(s: Service) -> Set[str]:
+        tmp = s.attrs.get("Spec").get("Labels").get("rds.repos")
+        return set() if tmp is None else {x.strip() for x in tmp.split(",")}
 
     @staticmethod
     def service_pre_hook(s: Service) -> Optional[str]:

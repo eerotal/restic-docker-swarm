@@ -153,16 +153,9 @@ class ResticWrapper:
         :param Service service: The service to backup.
         """
 
-        repo = ResticUtils.service_repo_name(service)
+        repos = ResticUtils.service_repo_names(service)
         pre_hook = ResticUtils.service_pre_hook(service)
         post_hook = ResticUtils.service_post_hook(service)
-
-        # Initialize the repository.
-        try:
-            self.init_repo(repo)
-        except ResticException as e:
-            logger.error("Failed to init restic repo: {}".format(e))
-            return
 
         # Run pre-backup hook.
         if pre_hook is not None:
@@ -173,18 +166,27 @@ class ResticWrapper:
                 logger.error(e)
                 return
 
-        # Backup.
-        try:
-            self.run_restic(
-                repo,
-                True,
-                "backup",
-                os.path.join(self.backup_base, repo)
-            )
-        except subprocess.CalledProcessError as e:
-            logger.error("Restic returned error code: %s", e.returncode)
-            # Don't return here because we still want to cleanup even
-            # when the backup fails.
+        for r in repos:
+            # Initialize the repository.
+            logger.info("Initializing repo %s.", r)
+            try:
+                self.init_repo(r)
+            except ResticException as e:
+                logger.error("Failed to init restic repo: %s", str(e))
+                continue
+
+            # Take backup.
+            logger.info("Taking backup of %s.", r)
+            try:
+                self.run_restic(
+                    r,
+                    True,
+                    "backup",
+                    os.path.join(self.backup_base, r)
+                )
+            except subprocess.CalledProcessError as e:
+                logger.error("Restic returned error code: %s", e.returncode)
+                continue
 
         # Run post-backup hook.
         if post_hook is not None:
