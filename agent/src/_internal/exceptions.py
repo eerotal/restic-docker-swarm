@@ -3,3 +3,6 @@ class ResticException(Exception):
 
 class SwarmException(Exception):
     pass
+
+class MissingDependencyException(Exception):
+    pass

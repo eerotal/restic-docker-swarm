@@ -1,10 +1,13 @@
 """Main executable script for restic-docker-swarm."""
 
+import os
 import logging
 import argparse
+import shutil
 
 import docker
 
+from _internal.exceptions import MissingDependencyException
 from _internal.resticwrapper import ResticWrapper
 from _internal.backupscheduler import BackupScheduler
 
@@ -14,7 +17,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
+def check_dependencies():
+    """Make sure all required dependencies exist."""
+
+    if shutil.which('restic') == None:
+        raise MissingDependencyException(
+            "'restic' binary is missing."
+        )
+
+    if not os.path.exists("/var/run/docker.sock"):
+        raise MissingDependencyException(
+            "Docker socket must exist at '/var/run/docker.sock'"
+        )
+
 if __name__ == "__main__":
+    check_dependencies()
+
     ap = argparse.ArgumentParser(description="restic-docker-swarm")
 
     ap.add_argument(
