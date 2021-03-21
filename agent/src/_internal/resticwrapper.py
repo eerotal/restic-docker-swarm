@@ -157,6 +157,13 @@ class ResticWrapper:
         pre_hook = ResticUtils.service_pre_hook(service)
         post_hook = ResticUtils.service_post_hook(service)
 
+        if len(repos) == 0:
+            logger.error(
+                "No repositories defined for service %s.",
+                service.name
+            )
+            return
+
         # Run pre-backup hook.
         if pre_hook is not None:
             logger.info("Running pre-backup hook.")

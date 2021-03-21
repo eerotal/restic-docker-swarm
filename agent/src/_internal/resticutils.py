@@ -90,7 +90,8 @@ class ResticUtils:
     @staticmethod
     def service_repo_names(s: Service) -> Set[str]:
         tmp = s.attrs.get("Spec").get("Labels").get("rds.repos")
-        return set() if tmp is None else {x.strip() for x in tmp.split(",")}
+        repos = set() if not tmp else {x.strip() for x in tmp.split(",")}
+        return {x for x in repos if x}
 
     @staticmethod
     def service_pre_hook(s: Service) -> Optional[str]:
