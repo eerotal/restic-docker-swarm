@@ -2,17 +2,16 @@
 
 import os
 import subprocess
-import re
 import logging
 from typing import List
 
-import docker
 from docker.models.services import Service
-
-from _internal.exceptions import SwarmException, ResticException
 from docker.client import DockerClient
 
-from _internal.resticutils import ResticUtils
+from restic_docker_swarm_agent._internal.exceptions import \
+    SwarmException, ResticException
+from restic_docker_swarm_agent._internal.resticutils import \
+    ResticUtils
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +24,9 @@ class ResticWrapper:
         docker_client: DockerClient,
         ssh_host: str,
         backup_base: str,
-        restic_args: str=None,
-        ssh_opts: str=None,
-        ssh_port: int=None,
+        restic_args: str = None,
+        ssh_opts: str = None,
+        ssh_port: int = None,
     ):
         self.docker_client = docker_client
 
@@ -66,8 +65,8 @@ class ResticWrapper:
 
         if len(tasks) > 1:
             logger.info(
-                ("Service %s has multiple tasks. Will only run "
-                "the requested command in one of them."),
+                "Service %s has multiple tasks. Will only run "
+                "the requested command in one of them.",
                 service.name
             )
         elif len(tasks) == 0:
@@ -113,13 +112,13 @@ class ResticWrapper:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
-        else:
-            logger.info("Exec: %s", " ".join(cmd))
-            return subprocess.run(
-                " ".join(cmd),
-                check=True,
-                shell=True
-            )
+
+        logger.info("Exec: %s", " ".join(cmd))
+        return subprocess.run(
+            " ".join(cmd),
+            check=True,
+            shell=True
+        )
 
     def init_repo(self, repo: str):
         """Initialize a restic repository if it doesn't exist.

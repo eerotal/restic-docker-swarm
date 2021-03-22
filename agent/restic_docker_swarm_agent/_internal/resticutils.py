@@ -4,7 +4,10 @@ from typing import List, Optional, Set
 
 from docker.models.services import Service
 
+
 class ResticUtils:
+    """Utility methods for controlling restic."""
+
     @classmethod
     def full_repo(cls, host: str, repo: str) -> str:
         """Get the full address of a restic repository.
@@ -68,9 +71,10 @@ class ResticUtils:
         :rtype: List[str]
         """
 
+        ssh_cmd = " ".join(cls.ssh_cmd(host, port, ssh_opts))
         ret = [
             "restic",
-            "-o", "sftp.command='{}'".format(" ".join(cls.ssh_cmd(host, port, ssh_opts))),
+            "-o", "sftp.command='{}'".format(ssh_cmd),
             "-r", cls.full_repo(host, repo)
         ]
 
@@ -81,22 +85,27 @@ class ResticUtils:
 
     @staticmethod
     def service_should_backup(s: Service) -> Optional[bool]:
+        """Get the value of the rds.backup label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.backup") == "true"
 
     @staticmethod
     def service_cron_line(s: Service) -> Optional[str]:
+        """Get the value of the rds.run-at label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.run-at")
 
     @staticmethod
     def service_repo_names(s: Service) -> Set[str]:
+        """Get the values of the rds.repos label for a Service."""
         tmp = s.attrs.get("Spec").get("Labels").get("rds.repos")
         repos = set() if not tmp else {x.strip() for x in tmp.split(",")}
         return {x for x in repos if x}
 
     @staticmethod
     def service_pre_hook(s: Service) -> Optional[str]:
+        """Get the value of the rds.pre-hook label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.pre-hook")
 
     @staticmethod
     def service_post_hook(s: Service) -> Optional[str]:
+        """Get the value of the rds.post-hook label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.post-hook")

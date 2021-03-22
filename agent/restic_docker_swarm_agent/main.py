@@ -7,9 +7,12 @@ import shutil
 
 import docker
 
-from _internal.exceptions import MissingDependencyException
-from _internal.resticwrapper import ResticWrapper
-from _internal.backupscheduler import BackupScheduler
+from restic_docker_swarm_agent._internal.exceptions import \
+    MissingDependencyException
+from restic_docker_swarm_agent._internal.resticwrapper import \
+    ResticWrapper
+from restic_docker_swarm_agent._internal.backupscheduler import \
+    BackupScheduler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,10 +20,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
+
 def check_dependencies():
     """Make sure all required dependencies exist."""
 
-    if shutil.which('restic') == None:
+    if shutil.which('restic') is None:
         raise MissingDependencyException(
             "'restic' binary is missing."
         )
@@ -29,6 +33,7 @@ def check_dependencies():
         raise MissingDependencyException(
             "Docker socket must exist at '/var/run/docker.sock'"
         )
+
 
 if __name__ == "__main__":
     check_dependencies()

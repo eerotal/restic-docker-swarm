@@ -7,7 +7,8 @@ import sys
 import subprocess
 from typing import List
 
-from _internal.resticutils import ResticUtils
+from restic_docker_swarm_agent._internal.resticutils import ResticUtils
+
 
 def get_default_restic_cmd():
     """Get the default restic command as a list of strings.
@@ -19,10 +20,12 @@ def get_default_restic_cmd():
     host = os.environ["SSH_HOST"]
     port = os.environ["SSH_PORT"]
     repo = os.environ["REPO_PATH"]
+    known_hosts_file = os.environ["SSH_KNOWN_HOSTS_FILE"]
+    user = os.environ["USER"]
 
     ssh_opts = [
-        "-o", "UserKnownHostsFile={}".format(os.environ["SSH_KNOWN_HOSTS_FILE"]),
-        "-i", "/home/{}/.ssh/id".format(os.environ["USER"])
+        "-o", "UserKnownHostsFile={}".format(known_hosts_file),
+        "-i", "/home/{}/.ssh/id".format(user)
     ]
 
     restic_args = [
@@ -37,6 +40,7 @@ def get_default_restic_cmd():
         restic_args
     )
 
+
 def usage() -> int:
     """Print a help text.
 
@@ -48,9 +52,10 @@ def usage() -> int:
     print("The default restic command executed by this script is:")
     print("  " + " ".join(get_default_restic_cmd()) + "\n")
     print("This command is built from shell environment variables.")
-    print("All arguments passed to this script are appended to end of the default command.")
+    print("All arguments are appended to end of the default command.")
 
     return 0
+
 
 def main(argv: List[str]) -> int:
     """Run restic with a set of arguments.
@@ -70,6 +75,7 @@ def main(argv: List[str]) -> int:
         check=False,
         shell=True
     ).returncode
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:

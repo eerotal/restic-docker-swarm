@@ -13,9 +13,10 @@ from docker.errors import NotFound
 from docker.models.services import Service
 from docker.client import DockerClient
 
-from _internal.resticutils import ResticUtils
+from restic_docker_swarm_agent._internal.resticutils import ResticUtils
 
 logger = logging.getLogger(__name__)
+
 
 class BackupScheduler:
     """Backup scheduler class."""
