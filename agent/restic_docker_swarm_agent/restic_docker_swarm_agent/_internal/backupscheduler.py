@@ -56,7 +56,7 @@ class BackupScheduler:
             return
 
         # Backup the service if it should still be backed up.
-        if ResticUtils.service_should_backup(tmp):
+        if ResticUtils.service_backup(tmp):
             logger.info("Backing up %s", tmp.name)
             self.backup_func(tmp)
 
@@ -64,7 +64,7 @@ class BackupScheduler:
         """Schedule backups based on Service labels."""
 
         for s in self.docker_client.services.list():
-            if not ResticUtils.service_should_backup(s):
+            if not ResticUtils.service_backup(s):
                 continue
 
             # Check whether a backup is already scheduled for the service.
@@ -78,7 +78,7 @@ class BackupScheduler:
                 continue
 
             # Schedule a new backup.
-            run_at = ResticUtils.service_cron_line(s)
+            run_at = ResticUtils.service_backup_at(s)
             if run_at is not None:
                 try:
                     criter = croniter(run_at, datetime.now().astimezone())

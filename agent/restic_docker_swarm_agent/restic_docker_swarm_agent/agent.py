@@ -57,6 +57,13 @@ def entrypoint():
         help="The backup base path where backups are taken from."
     )
     ap.add_argument(
+        "-f",
+        "--forget-policy",
+        type=str,
+        required=True,
+        help="Set the backup forget policy."
+    )
+    ap.add_argument(
         "-p",
         "--ssh-port",
         type=int,
@@ -100,6 +107,7 @@ def entrypoint():
         docker_client,
         args.ssh_host,
         args.backup_base,
+        args.forget_policy,
         restic_args=args.restic_arg,
         ssh_opts=args.ssh_option,
         ssh_port=args.ssh_port

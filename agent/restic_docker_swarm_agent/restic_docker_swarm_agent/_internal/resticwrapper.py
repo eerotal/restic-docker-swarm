@@ -24,9 +24,10 @@ class ResticWrapper:
         docker_client: DockerClient,
         ssh_host: str,
         backup_base: str,
-        restic_args: str = None,
-        ssh_opts: str = None,
-        ssh_port: int = None,
+        forget_policy: str,
+        restic_args: str=None,
+        ssh_opts: str=None,
+        ssh_port: int=None
     ):
         self.docker_client = docker_client
 
@@ -34,7 +35,9 @@ class ResticWrapper:
         self.restic_args = restic_args
         self.ssh_opts = ssh_opts
         self.ssh_port = ssh_port
+
         self.backup_base = backup_base
+        self.forget_policy = ResticUtils.parse_forget_policy(forget_policy)
 
     def get_restic_cmd(self, repo: str) -> List[str]:
         """Build a restic command.
@@ -146,15 +149,37 @@ class ResticWrapper:
         except subprocess.CalledProcessError as e:
             raise ResticException("'restic init' failed.") from e
 
+    def forget(self, service: Service):
+        """Forget old snapshots from service according to the forget policy.
+
+        :param Service service: The service who's backups to forget.
+        """
+        repos = ResticUtils.service_backup_repos(service)
+
+        for r in repos:
+            logger.info(
+                "Forgetting old backups of service %s from repo %s.",
+                service.name,
+                r
+            )
+
+            args = ResticUtils.forget_policy_as_args(self.forget_policy)
+
+            # Forget old snapshots.
+            try:
+                self.run_restic(r, True, "forget", *args)
+            except subprocess.CalledProcessError as e:
+                logger.error("Restic returned error code: %s", e.returncode)
+
     def backup(self, service: Service):
         """Backup files with restic and run pre-hooks and post-hooks.
 
         :param Service service: The service to backup.
         """
 
-        repos = ResticUtils.service_repo_names(service)
-        pre_hook = ResticUtils.service_pre_hook(service)
-        post_hook = ResticUtils.service_post_hook(service)
+        repos = ResticUtils.service_backup_repos(service)
+        pre_hook = ResticUtils.service_backup_pre_hook(service)
+        post_hook = ResticUtils.service_backup_post_hook(service)
 
         if len(repos) == 0:
             logger.error(
@@ -201,6 +226,9 @@ class ResticWrapper:
             except subprocess.CalledProcessError as e:
                 logger.error("Restic returned error code: %s", e.returncode)
                 continue
+
+            # Forget old snapshots.
+            self.forget(service)
 
         # Run post-backup hook.
         if post_hook is not None:

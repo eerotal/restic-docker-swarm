@@ -20,6 +20,7 @@ su "${TARGET_USER}"
 
 rds-agent \
     --backup-base="${BACKUP_BASE}" \
+    --forget-policy="${BACKUP_FORGET_POLICY}" \
     --ssh-host="${SSH_HOST}" \
     --ssh-port="${SSH_PORT}" \
     --ssh-option="-o UserKnownHostsFile=${SSH_KNOWN_HOSTS_FILE}" \

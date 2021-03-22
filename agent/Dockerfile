@@ -10,6 +10,7 @@ ENV SSH_PORT="2222"
 ENV SSH_PRIVKEY_FILE="/run/secrets/restic-ssh-privkey"
 ENV SSH_KNOWN_HOSTS_FILE="/run/secrets/restic-ssh-known-hosts"
 ENV RESTIC_REPO_PASSWORD_FILE="/run/secrets/restic-repo-password"
+ENV BACKUP_FORGET_POLICY="1 1 1 1 1 0y0m0d0h 0 false"
 
 # Not intended to be changed by users.
 ENV BACKUP_BASE="/backup"

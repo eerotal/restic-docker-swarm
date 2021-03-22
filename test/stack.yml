@@ -15,10 +15,10 @@ services:
     deploy:
       labels:
         rds.backup: "true"
-        rds.repos: "postgres-1,postgres-2"
-        rds.run-at: "* * * * *"
-        rds.pre-hook: "pg_dumpall -U postgres -f /tmp/dump/dump.db"
-        rds.post-hook: "rm -rf /tmp/dump/dump.db"
+        rds.backup.repos: "postgres-1,postgres-2"
+        rds.backup.at: "* * * * *"
+        rds.backup.pre-hook: "pg_dumpall -U postgres -f /tmp/dump/dump.db"
+        rds.backup.post-hook: "rm -rf /tmp/dump/dump.db"
 
   rds-agent:
     image: eerotal/restic-docker-swarm-agent:test
@@ -28,6 +28,7 @@ services:
       SSH_PORT: "2222"
       EXTRA_ARGS: "--verbose"
       SSH_KNOWN_HOSTS_FILE: /root/host_fingerprints/known_hosts
+      BACKUP_FORGET_POLICY: "5 5 0 0 0 0y0m0d0h 0 true"
 
     volumes:
       - database-dump:/backup/postgres-1/:ro

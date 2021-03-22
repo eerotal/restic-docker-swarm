@@ -35,7 +35,8 @@ environment variables.
 | SSH_PRIVKEY_FILE          | /run/secrets/restic-ssh-privkey     | A path to the SSH identity file in the container. *2         |
 | SSH_KNOWN_HOSTS_FILE      | /run/secrets/restic-ssh-known-hosts | A path to the SSH known hosts file in the container. *2      |
 | RESTIC_REPO_PASSWORD_FILE | /run/secrets/restic-repo-password   | A path to the restic repo password file in the container. *2 |
-| EXTRA_ARGS                |                                     | Extra arguments passed to the internal rds.py program. *3    |
+| BACKUP_FORGET_POLICY      | 1 1 1 1 1 0y0m0d0h 0 false          | Policy for forgetting and pruning old backups. *3            |
+| EXTRA_ARGS                |                                     | Extra arguments passed to the internal rds.py program. *4    |
 
 **Notes:**
 
@@ -44,7 +45,14 @@ environment variables.
 2. The `*_FILE` variables are paths to the respective files inside the container.
    You can use these to configure eg. paths to secrets but usually the defaults
    should work fine.
-3. Take a look into the source repository for more information. For example, you
+3. The expected format for the forget policy is `HOURLY DAILY WEEKLY MONTHLY YEARLY
+   WITHIN LAST PRUNE [TAG]` where each word corresponds to an argument passed to
+   'restic forget'. PRUNE should be 'true' or 'false' depending on whether
+   forgotten backups should be pruned automatically. '[TAG]' is optional and it
+   can also be a comma separated list of multiple tags to keep. See the [restic
+   documentation](https://restic.readthedocs.io/en/latest/060_forget.html) for more
+   info.
+4. Take a look into the source repository for more information. For example, you
    can pass `--verbose` in `EXTRA_ARGS` for more verbose logs but usually this
    variable is not needed.
 
