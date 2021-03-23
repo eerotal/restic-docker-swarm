@@ -28,6 +28,9 @@ jobs:
           tox -e pep8,pylint
 
   build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
