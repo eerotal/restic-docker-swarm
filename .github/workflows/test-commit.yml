@@ -1,0 +1,55 @@
+name: Tests
+on:
+  push:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Install package and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+
+      - name: Run linters
+        run: |
+          cd agent/restic_docker_swarm_agent/
+          tox -e pep8,pylint
+
+  build:
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build server image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./server/
+          file: ./server/Dockerfile
+          platforms: linux/amd64
+          push: false
+
+      - name: Build agent image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./agent/
+          file: ./agent/Dockerfile
+          platforms: linux/amd64
+          push: false
