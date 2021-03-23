@@ -35,7 +35,9 @@ def check_dependencies():
         )
 
 
-if __name__ == "__main__":
+def entrypoint():
+    """Entrypoint method."""
+
     check_dependencies()
 
     ap = argparse.ArgumentParser(description="restic-docker-swarm")
@@ -108,3 +110,7 @@ if __name__ == "__main__":
         rds.backup
     )
     backupscheduler.run()
+
+
+if __name__ == "__main__":
+    entrypoint()

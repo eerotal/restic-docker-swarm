@@ -1,3 +1,0 @@
-croniter>=1.0.8
-docker>=4.2
-pause>=0.3

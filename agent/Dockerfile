@@ -11,28 +11,28 @@ ENV SSH_PRIVKEY_FILE="/run/secrets/restic-ssh-privkey"
 ENV SSH_KNOWN_HOSTS_FILE="/run/secrets/restic-ssh-known-hosts"
 ENV RESTIC_REPO_PASSWORD_FILE="/run/secrets/restic-repo-password"
 
-ENV BACKUP_BASE="/backup"
-
 # Not intended to be changed by users.
-ENV USER="restic"
-ENV USER_UID="1000"
+ENV BACKUP_BASE="/backup"
+ENV TARGET_USER="restic"
+ENV TARGET_USER_UID="1000"
+ENV SSH_ID_FILE="/home/${TARGET_USER}/.ssh/id"
 
 USER root
-RUN apk add --no-cache restic python3 docker-py openssh
-RUN apk add --no-cache --virtual py3-deps py3-pip && \
-    pip3 install pause croniter && \
-    apk del --no-cache py3-deps
+RUN apk add --no-cache restic python3 py3-pip openssh && \
+    apk add --no-cache --virtual py3-build-deps py3-setuptools
 
-RUN adduser -D -u $USER_UID $USER
-WORKDIR /home/$USER
+RUN adduser -D -u $TARGET_USER_UID $TARGET_USER
+WORKDIR /home/$TARGET_USER
 
 COPY docker-entrypoint.sh .
-COPY src/ rds/
 
-# Symlink restic.py to /usr/local/bin/runrestic so that it's easy to
-# execute with docker exec.
-RUN chmod +x rds/runrestic.py && \
-    ln -s $(realpath rds/runrestic.py) /usr/local/bin/runrestic
+COPY restic_docker_swarm_agent/ restic_docker_swarm_agent/
+RUN cd restic_docker_swarm_agent/ && \
+    python3 setup.py install && \
+    cd .. && \
+    rm -rf restic_docker_swarm_agent/
+
+RUN apk del --no-cache py3-build-deps
 
 # Add a custom shell profile script.
 COPY config/ash/ashrc "$HOME_DIR/.ashrc"
