@@ -25,9 +25,9 @@ class ResticWrapper:
         ssh_host: str,
         backup_base: str,
         forget_policy: str,
-        restic_args: str=None,
-        ssh_opts: str=None,
-        ssh_port: int=None
+        restic_args: str = None,
+        ssh_opts: str = None,
+        ssh_port: int = None
     ):
         self.docker_client = docker_client
 

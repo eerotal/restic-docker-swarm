@@ -1,7 +1,5 @@
 """Utility methods for controlling restic."""
 
-import re
-
 from typing import List, Optional, Set, Dict, Union
 
 from docker.models.services import Service
@@ -94,9 +92,9 @@ class ResticUtils:
         HOURLY DAILY WEEKLY MONTHLY YEARLY WITHIN LAST PRUNE [TAG]
 
         where each word corresponds to an argument passed to 'restic forget'.
-        PRUNE should be 'true' or 'false' depending on whether forgotten backups
-        should be pruned automatically. [TAG] is optional and it can also be a
-        comma separated list of multiple tags to keep.
+        PRUNE should be 'true' or 'false' depending on whether forgotten
+        backups should be pruned automatically. [TAG] is optional and it can
+        also be a comma separated list of multiple tags to keep.
 
         :param str spec: The policy string to parse.
 
@@ -110,7 +108,7 @@ class ResticUtils:
         # Make sure the policy format is valid.
         if len(parts) < 8 or len(parts) > 9:
             raise ValueError(
-                "Invalid backup forget policy. Expected: " \
+                "Invalid backup forget policy. Expected: "
                 "'H D W M Y WITHIN LAST PRUNE [TAG]'."
             )
 
@@ -170,22 +168,27 @@ class ResticUtils:
 
     @staticmethod
     def service_backup(s: Service) -> bool:
+        """Get the value of the rds.backup label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.backup") == "true"
 
     @staticmethod
     def service_backup_at(s: Service) -> Optional[str]:
+        """Get the value of the rds.backup.at label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.backup.at")
 
     @staticmethod
     def service_backup_repos(s: Service) -> Set[str]:
+        """Get the values of the rds.backup.repos label for a Service."""
         tmp = s.attrs.get("Spec").get("Labels").get("rds.backup.repos")
         repos = set() if not tmp else {x.strip() for x in tmp.split(",")}
         return {x for x in repos if x}
 
     @staticmethod
     def service_backup_pre_hook(s: Service) -> Optional[str]:
+        """Get the value of the rds.backup.pre-hook label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.backup.pre-hook")
 
     @staticmethod
     def service_backup_post_hook(s: Service) -> Optional[str]:
+        """Get the value of the rds.backup.post-hook label for a Service."""
         return s.attrs.get("Spec").get("Labels").get("rds.backup.post-hook")
