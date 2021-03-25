@@ -56,6 +56,7 @@ def get_restic_cmd(repo: str) -> str:
         restic_args
     )
 
+
 def run_restic(repo: str, argv: List[str]) -> int:
     """Run restic with a set of arguments.
 
