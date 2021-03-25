@@ -36,7 +36,7 @@ environment variables.
 | SSH_KNOWN_HOSTS_FILE      | /run/secrets/restic-ssh-known-hosts | A path to the SSH known hosts file in the container. *2      |
 | RESTIC_REPO_PASSWORD_FILE | /run/secrets/restic-repo-password   | A path to the restic repo password file in the container. *2 |
 | BACKUP_FORGET_POLICY      | 1 1 1 1 1 0y0m0d0h 0 false          | Policy for forgetting and pruning old backups. *3            |
-| EXTRA_ARGS                |                                     | Extra arguments passed to the internal rds.py program. *4    |
+| EXTRA_ARGS                |                                     | Extra arguments passed to the internal rds-run program. *4   |
 
 **Notes:**
 
@@ -58,13 +58,13 @@ environment variables.
 
 Each service you want to back up should define the following **service** labels.
 
-| Label         | Description                                        |
-|---------------|----------------------------------------------------|
-| rds.backup    | "true" to enable backups.                          |
-| rds.repos     | Repository paths. *1                               |
-| rds.run-at    | Cron expression for taking backups.                |
-| rds.pre-hook  | Pre-backup hook command to run in the service. *2  |
-| rds.post-hook | Post-backup hook command to run in the service. *2 |
+| Label                | Description                                        |
+|----------------------|----------------------------------------------------|
+| rds.backup           | "true" to enable backups.                          |
+| rds.backup.repos     | Repository paths. *1                               |
+| rds.backup.run-at    | Cron expression for taking backups.                |
+| rds.backup.pre-hook  | Pre-backup hook command to run in the service. *2  |
+| rds.backup.post-hook | Post-backup hook command to run in the service. *2 |
 
 **Notes:**
 
