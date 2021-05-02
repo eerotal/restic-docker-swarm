@@ -171,10 +171,12 @@ class ResticWrapper:
             except subprocess.CalledProcessError as e:
                 logger.error("Restic returned error code: %s", e.returncode)
 
-    def backup(self, service: Service):
+    def backup(self, service: Service) -> bool:
         """Backup files with restic and run pre-hooks and post-hooks.
 
         :param Service service: The service to backup.
+
+        :return: True on success, False on failure.
         """
 
         repos = ResticUtils.service_backup_repos(service)
@@ -186,7 +188,7 @@ class ResticWrapper:
                 "No repositories defined for service %s.",
                 service.name
             )
-            return
+            return False
 
         # Run pre-backup hook.
         if pre_hook is not None:
@@ -195,8 +197,9 @@ class ResticWrapper:
                 self.run_in_service(service, pre_hook)
             except SwarmException as e:
                 logger.error(e)
-                return
+                return False
 
+        ret = True
         for r in repos:
             if os.path.isabs(r):
                 logger.error(
@@ -204,6 +207,7 @@ class ResticWrapper:
                     r,
                     service.name
                 )
+                ret = False
                 continue
 
             # Initialize the repository.
@@ -212,6 +216,7 @@ class ResticWrapper:
                 self.init_repo(r)
             except ResticException as e:
                 logger.error("Failed to init restic repo: %s", str(e))
+                ret = False
                 continue
 
             # Take backup.
@@ -225,6 +230,7 @@ class ResticWrapper:
                 )
             except subprocess.CalledProcessError as e:
                 logger.error("Restic returned error code: %s", e.returncode)
+                ret = False
                 continue
 
             # Forget old snapshots.
@@ -237,3 +243,6 @@ class ResticWrapper:
                 self.run_in_service(service, post_hook)
             except SwarmException as e:
                 logger.error(e)
+                ret = False
+
+        return ret

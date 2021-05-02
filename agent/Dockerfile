@@ -26,6 +26,7 @@ RUN adduser -D -u $TARGET_USER_UID $TARGET_USER
 WORKDIR /home/$TARGET_USER
 
 COPY docker-entrypoint.sh .
+COPY docker-healthcheck.py .
 
 COPY restic_docker_swarm_agent/ restic_docker_swarm_agent/
 RUN cd restic_docker_swarm_agent/ && \
@@ -40,3 +41,10 @@ COPY config/ash/ashrc "$HOME_DIR/.ashrc"
 ENV ENV="$HOME_DIR/.ashrc"
 
 CMD ["sh", "docker-entrypoint.sh"]
+
+HEALTHCHECK \
+    --interval=10s \
+    --timeout=10s \
+    --start-period=20s \
+    --retries=5 \
+    CMD python3 docker-healthcheck.py

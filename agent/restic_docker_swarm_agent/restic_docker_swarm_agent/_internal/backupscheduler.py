@@ -5,6 +5,8 @@ import time
 import sched
 from datetime import datetime
 from typing import Callable
+import threading
+from multiprocessing.connection import Listener
 
 import pause
 from croniter import croniter
@@ -41,7 +43,10 @@ class BackupScheduler:
         self.schedule_priority = 5
         self.backup_priority = 10
 
-    def backup_executor(self, service: Service) -> None:
+        self.healthy_lock = threading.Lock()
+        self.healthy = {}
+
+    def do_backup(self, service: Service) -> None:
         """Take a new backup of a service.
 
         :param Service service: The service to backup,
@@ -58,7 +63,10 @@ class BackupScheduler:
         # Backup the service if it should still be backed up.
         if ResticUtils.service_backup(tmp):
             logger.info("Backing up %s", tmp.name)
-            self.backup_func(tmp)
+
+            self.healthy_lock.acquire()
+            self.healthy[tmp.id] = self.backup_func(tmp)
+            self.healthy_lock.release()
 
     def schedule_backups(self) -> None:
         """Schedule backups based on Service labels."""
@@ -95,7 +103,7 @@ class BackupScheduler:
                 self.backup_sched.enterabs(
                     ts,
                     self.backup_priority,
-                    self.backup_executor,
+                    self.do_backup,
                     [],
                     {"service": s}
                 )
@@ -113,11 +121,32 @@ class BackupScheduler:
             self.schedule_backups
         )
 
-    def run(self):
+    def run_scheduler(self):
         """Run the backup scheduler."""
+        logger.info("Starting backup scheduling thread.")
+        self.schedule_backups()
+        self.backup_sched.run()
+
+    def run(self):
+        # Run the backup scheduler.
+        sched_thread = threading.Thread(target=self.run_scheduler)
+        sched_thread.start()
+
+        # Start the status query server.
+        listener = Listener(('localhost', 5555))
 
         while True:
-            # Run scheduler.
-            logger.info("Starting BackupScheduler.")
-            self.schedule_backups()
-            self.backup_sched.run()
+            conn = listener.accept()
+            client = listener.last_accepted
+            logger.debug("Connection accepted: %s:%s", client[0], client[1])
+
+            while True:
+                msg = conn.recv()
+                if msg == "status":
+                    self.healthy_lock.acquire()
+                    conn.send(self.healthy)
+                    self.healthy_lock.release()
+                elif msg == "close":
+                    conn.close()
+                    logger.debug("Connection closed: %s:%s", client[0], client[1])
+                    break
