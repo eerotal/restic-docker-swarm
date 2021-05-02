@@ -124,18 +124,25 @@ You can access the container by running
 docker exec -it CONTAINER_ID sh
 ```
 
-Because using the restic binary directly requires you to specify quite a few
-arguments manually, the agent container also includes a script called *runrestic.py*
-for running restic with a default set of arguments. This script is also symlinked to
-PATH as *runrestic* so that you can easily run it with eg. `docker exec ...`.
+The agent container includes a wrapper called *rds-run* for running *restic*
+with a default set of arguments. *rds-run* is by default configured to perform all
+operations on the SFTP host confired for the agent container. Run *rds-run*
+without arguments for a help message. Arguments passed to *rds-run* are passed
+to the restic binary after the default ones.
 
-The default command *runrestic* uses depends on the agent configuration and it is
-such that restic performs all operations on the remote repository configured for
-the agent. You can see the default command and a help text by running *runrestic*
-without arguments. All arguments passed to *runrestic* are passed directly to the
-original restic binary after the default ones.
+Example usage:
 
-The agent container shell also prints some convenient help information on login.
+```
+/home/restic # rds-run -r postgres-1 list snapshots
+subprocess: restic -o sftp.command='ssh restic@rds-server -o UserKnownHostsFile=/root/host_fingerprints/known_hosts -i /home/restic/.ssh/id -p 2222 -s sftp' -r sftp:restic@rds-server:postgres-1 --password-file /run/secrets/restic-repo-password snapshots
+repository d564af4e opened successfully, password is correct
+ID        Time                 Host          Tags        Paths
+---------------------------------------------------------------------------
+154d5203  2021-05-02 16:53:01  fc18418c0d6f              /backup/postgres-1
+---------------------------------------------------------------------------
+1 snapshots
+/home/restic #
+```
 
 ## Server CLI usage
 
@@ -148,9 +155,6 @@ You can access the container by running
 ```
 docker exec -it CONTAINER_ID sh
 ```
-
-The server container shell also prints some convenient information and statistics
-on login.
 
 ## Pre- and post-backup hooks
 

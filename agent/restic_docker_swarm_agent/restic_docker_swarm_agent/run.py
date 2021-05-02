@@ -11,7 +11,7 @@ The environment variables used by this script are:
 
   SSH_HOST = The remote SSH host.
   SSH_PORT = SSH host port number.
-  SSH_IDFILE = SSH private key file for authenticating to the SSH host.
+  SSH_ID_FILE = SSH private key file for authenticating to the SSH host.
   SSH_KNOWN_HOSTS_FILE = Populated known_hosts file for identifying SSH hosts.
   RESTIC_REPO_PASSWORD_FILE = Restic repository password file.
 
@@ -36,7 +36,7 @@ def get_restic_cmd(repo: str) -> str:
 
     host = os.environ["SSH_HOST"]
     port = os.environ["SSH_PORT"]
-    id_file = os.environ["SSH_IDFILE"]
+    id_file = os.environ["SSH_ID_FILE"]
     known_hosts_file = os.environ["SSH_KNOWN_HOSTS_FILE"]
 
     ssh_opts = [
