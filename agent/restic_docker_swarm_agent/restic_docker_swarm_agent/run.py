@@ -68,7 +68,7 @@ def run_restic(repo: str, argv: List[str]) -> int:
     """
 
     cmd = get_restic_cmd(repo)
-    cmd.extend(argv[1:])
+    cmd.extend(argv)
 
     print("subprocess: " + " ".join(cmd))
     return subprocess.run(
