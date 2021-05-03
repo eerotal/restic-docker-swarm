@@ -103,6 +103,7 @@ def entrypoint():
     )
     args = ap.parse_args()
 
+    # Enable more verbose logs if --verbose was used.
     if args.verbose:
         logger.setLevel(logging.DEBUG)
     else:
@@ -110,9 +111,16 @@ def entrypoint():
 
     # Parse the value of the --listen flag.
     query_server = args.listen.split(":")
+
     if len(query_server) > 2:
         raise ValueError("Invalid value for --listen: {}".format(args.listen))
-    query_server = (query_server[0], int(query_server[1]))
+
+    try:
+        query_server = (query_server[0], int(query_server[1]))
+    except ValueError as e:
+        raise ValueError(
+            "Invalid port for --listen: {}".format(query_server[1])
+        ) from e
 
     docker_client = docker.from_env()
 
