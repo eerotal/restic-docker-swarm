@@ -60,9 +60,10 @@ class BackupScheduler:
         :rtype: Dict[str, bool]
         """
 
-        self.internal_status_lock.acquire()
-        status = self.internal_status.copy()
-        self.internal_status_lock.release()
+        status = None
+
+        with self.internal_status_lock:
+            status = self.internal_status.copy()
 
         return status
 
@@ -85,9 +86,8 @@ class BackupScheduler:
             logger.info("Backing up %s", tmp.name)
             tmp_status = self.backup_func(tmp)
 
-            self.internal_status_lock.acquire()
-            self.internal_status[tmp.id] = tmp_status
-            self.internal_status_lock.release()
+            with self.internal_status_lock:
+                self.internal_status[tmp.id] = tmp_status
 
     def schedule_backups(self) -> None:
         """Schedule backups based on Service labels."""
