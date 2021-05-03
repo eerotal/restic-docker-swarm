@@ -1,5 +1,8 @@
 # restic-docker-swarm - Encrypted Docker Swarm backups with restic
 
+![Build and push to Docker Hub badge](https://github.com/eerotal/restic-docker-swarm/workflows/Deployment/badge.svg)
+![Unit tests badge](https://github.com/eerotal/restic-docker-swarm/workflows/Tests/badge.svg)
+
 `restic-docker-swarm` is a utility Docker image for automating Docker
 volume backups to remote directories using *restic*.
 
