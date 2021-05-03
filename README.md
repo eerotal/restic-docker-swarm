@@ -126,9 +126,9 @@ docker exec -it CONTAINER_ID sh
 
 The agent container includes a wrapper called *rds-run* for running *restic*
 with a default set of arguments. *rds-run* is by default configured to perform all
-operations on the SFTP host confired for the agent container. Run *rds-run*
-without arguments for a help message. Arguments passed to *rds-run* are passed
-to the restic binary after the default ones.
+operations on the SFTP host confired for the agent container. Run `rds-run -h`
+for a help message. Arguments passed to *rds-run* are passed to the *restic*
+binary after the default ones.
 
 Example usage:
 
@@ -174,7 +174,10 @@ a Postgres database in this manner.
 
 ## Container healthcheck
 
-TODO
+The agent image includes a healthcheck which periodically queries the status of
+all backups from the backup scheduler and if any of the backups has failed, marks
+the container as unhealthy. The status queries are done via a simple status
+query server running in the backup scheduler daemon.
 
 ## License
 
