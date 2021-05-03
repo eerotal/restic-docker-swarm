@@ -90,6 +90,13 @@ def entrypoint():
         help="Pass an argument to restic."
     )
     ap.add_argument(
+        "-l",
+        "--listen",
+        type=str,
+        required=True,
+        help="Address and port of the status query server."
+    )
+    ap.add_argument(
         "backup_path",
         type=str,
         help="The directory to backup."
@@ -100,6 +107,12 @@ def entrypoint():
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+
+    # Parse the value of the --listen flag.
+    query_server = args.listen.split(":")
+    if len(query_server) > 2:
+        raise ValueError("Invalid value for --listen: {}".format(args.listen))
+    query_server = (query_server[0], int(query_server[1]))
 
     docker_client = docker.from_env()
 
@@ -115,7 +128,8 @@ def entrypoint():
 
     backupscheduler = BackupScheduler(
         docker_client,
-        rds.backup
+        rds.backup,
+        query_server
     )
     backupscheduler.run()
 

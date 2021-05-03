@@ -26,5 +26,6 @@ rds-agent \
     --ssh-option="-o UserKnownHostsFile=${SSH_KNOWN_HOSTS_FILE}" \
     --ssh-option="-i ${SSH_ID_FILE}" \
     --restic-arg="--password-file=${RESTIC_REPO_PASSWORD_FILE}" \
+    --listen="localhost:5555" \
     ${EXTRA_ARGS} \
     "${BACKUP_PATH}"
