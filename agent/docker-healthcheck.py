@@ -8,11 +8,11 @@ ret = 0
 # Connect to the status query server.
 conn = Client(("localhost", 5555))
 conn.send("status")
-healthy = conn.recv()
+status = conn.recv()
 
 # Check the status of all service backups.
-for sid in healthy:
-    if healthy[sid]:
+for sid in status:
+    if status[sid]:
         print("{}: OK".format(sid))
     else:
         print("{}: FAILED ".format(sid))

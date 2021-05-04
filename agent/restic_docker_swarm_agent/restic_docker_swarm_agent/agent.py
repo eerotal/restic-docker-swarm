@@ -4,6 +4,7 @@ import os
 import logging
 import argparse
 import shutil
+import threading
 
 import docker
 
@@ -13,6 +14,8 @@ from restic_docker_swarm_agent._internal.resticwrapper import \
     ResticWrapper
 from restic_docker_swarm_agent._internal.backupscheduler import \
     BackupScheduler
+from restic_docker_swarm_agent._internal.queryserver import \
+    QueryServer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -110,16 +113,16 @@ def entrypoint():
         logger.setLevel(logging.INFO)
 
     # Parse the value of the --listen flag.
-    query_server = args.listen.split(":")
+    server_listen = args.listen.split(":")
 
-    if len(query_server) > 2:
+    if len(server_listen) > 2:
         raise ValueError("Invalid value for --listen: {}".format(args.listen))
 
     try:
-        query_server = (query_server[0], int(query_server[1]))
+        server_listen = (server_listen[0], int(server_listen[1]))
     except ValueError as e:
         raise ValueError(
-            "Invalid port for --listen: {}".format(query_server[1])
+            "Invalid port for --listen: {}".format(server_listen[1])
         ) from e
 
     docker_client = docker.from_env()
@@ -134,12 +137,17 @@ def entrypoint():
         ssh_port=args.ssh_port
     )
 
-    backupscheduler = BackupScheduler(
-        docker_client,
-        rds.backup,
-        query_server
-    )
-    backupscheduler.run()
+    # Start the BackupScheduler.
+    backupscheduler = BackupScheduler(docker_client, rds.backup)
+    sched_thread = threading.Thread(target=backupscheduler.run)
+    sched_thread.start()
+
+    # Start the QueryServer.
+    queryserver = QueryServer(server_listen, backupscheduler)
+    queryserver.run()
+
+    # We should never get this far since queryserver.run() should never exit.
+    sched_thread.join()
 
 
 if __name__ == "__main__":

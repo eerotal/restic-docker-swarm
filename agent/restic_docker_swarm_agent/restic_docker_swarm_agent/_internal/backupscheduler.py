@@ -4,9 +4,8 @@ import logging
 import time
 import sched
 from datetime import datetime
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict
 import threading
-from multiprocessing.connection import Listener
 
 import pause
 from croniter import croniter
@@ -30,22 +29,18 @@ class BackupScheduler:
     def __init__(
         self,
         docker_client: DockerClient,
-        backup_func: Callable[[Service], None],
-        query_server: Tuple[str, int]
+        backup_func: Callable[[Service], None]
     ):
         """Initialize a BackupScheduler.
 
         :param DockerClient docker_client: The DockerClient to use.
         :param Callable[[Service], None] backup_func: The backup method to use.
             This should accept the Service to backup as the only argument.
-        :param Tuple[str, int] query_server: The address and port of the status
-            query server.
         """
 
         self.docker_client = docker_client
         self.backup_func = backup_func
         self.backup_sched = sched.scheduler(time.time, pause.seconds)
-        self.query_server = query_server
 
         self.internal_status = {}
         self.internal_status_lock = threading.Lock()
@@ -54,7 +49,8 @@ class BackupScheduler:
     def status(self) -> Dict[str, bool]:
         """Get a copy of the current backup status dict.
 
-        This method locks self.internal_status automatically.
+        This method locks self.internal_status automatically and is
+        therefore thread-safe.
 
         :return: The backup status dict.
         :rtype: Dict[str, bool]
@@ -142,38 +138,9 @@ class BackupScheduler:
             self.schedule_backups
         )
 
-    def run_scheduler(self):
-        """Run the underlying backup scheduler."""
+    def run(self) -> None:
+        """Run the backup scheduler."""
 
         logger.info("Starting the backup scheduling thread.")
         self.schedule_backups()
         self.backup_sched.run()
-
-    def run(self):
-        """Main entrypoint."""
-
-        # Run the backup scheduler in a separate thread.
-        sched_thread = threading.Thread(target=self.run_scheduler)
-        sched_thread.start()
-
-        # Start the status query server.
-        logger.info(
-            "Listening for status queries on %s:%s.",
-            self.query_server[0],
-            self.query_server[1]
-        )
-        listener = Listener(self.query_server)
-
-        while True:
-            conn = listener.accept()
-            client = listener.last_accepted
-            logger.debug("Accepted: %s:%s", client[0], client[1])
-
-            while True:
-                msg = conn.recv()
-                if msg == "status":
-                    conn.send(self.status)
-                elif msg == "close":
-                    conn.close()
-                    logger.debug("Closed: %s:%s", client[0], client[1])
-                    break
