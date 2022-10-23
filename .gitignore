@@ -1,12 +1,12 @@
+# Generic ignores
 .#*
 \#*
-env.yml
-*.gpg
-
-__pycache__
 *.pyc
-
 *.egg-info
+__pycache__
 .tox/
-dist/
-build/
+
+# manager/ ignores
+manager/node_modules
+manager/build
+manager/src/db.sqlite3

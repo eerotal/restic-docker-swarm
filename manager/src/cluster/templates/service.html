@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+
+<!-- Header row START -->
+<div class="w-full flex flex-row justify-center md:justify-start mb-4">
+    <h1 class="text-2xl font-bold">Service {{service.name}}</h1>
+</div>
+<!-- Header row END -->
+
+
+<!-- Backup configuration START -->
+<div class="w-full mb-4">
+    <h2 class="text-xl font-bold border-b border-slate-200">Backup Configuration</h2>
+
+    <div class="w-full grid grid-cols-1 xl:grid-cols-2 gap-4 py-4">
+    </div>
+</div>
+<!-- Backup configuration END -->
+
+
+<!-- Containers list START -->
+<div class="w-full mb-4">
+    <h2 class="text-xl font-bold border-b border-slate-200">Containers</h2>
+
+    <div class="w-full grid grid-cols-1 xl:grid-cols-2 gap-4 py-4">
+        {% for c in containers.all %}
+        <div class="shadow-md rounded-md bg-slate-50">
+            <div class="flex flex-row items-center mx-4 pt-2 pb-1 border-b border-slate-200">
+                <h3 class="inline-block mr-2 text-lg font-bold overflow-hidden overflow-ellipsis whitespace-nowrap">
+                    {{ c.name }}
+                </h3>
+                <div class="shrink-0 w-4 h-4 ml-auto rounded-full drop-shadow-md
+                            {% if c.is_starting %}bg-yellow-400
+                            {% elif c.is_running %}bg-green-400
+                            {% elif c.is_failed %}bg-red-400
+                            {% else %}bg-gray-400{% endif %}"></div>
+            </div>
+            <div class="text-sm whitespace-nowrap mx-4 py-2">
+                <span class="block overflow-hidden overflow-ellipsis">
+                    <span class="inline-block w-16">ID:</span>
+                    {{ c.identifier }}
+                </span>
+                <span class="block overflow-hidden overflow-ellipsis">
+                    <span class="inline-block w-16">Status:</span>
+                    {{ c.get_status_display }}
+                </span>
+                <span class="block overflow-hidden overflow-ellipsis">
+                    <span class="inline-block w-16">Node:</span>
+                    {{ c.node.hostname }}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<!-- Containers list END -->
+
+
+{% endblock%}

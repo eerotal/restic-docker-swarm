@@ -1,0 +1,8 @@
+a.btn {
+    @apply block flex flex-row justify-center items-center h-8 bg-white
+           rounded-full drop-shadow-sm transition-all duration-100;
+
+    &:hover {
+        @apply bg-slate-200 drop-shadow-md;
+    }
+}
