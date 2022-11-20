@@ -1,0 +1,15 @@
+{# A partial for rendering form fields. #}
+
+{# Context variables: #}
+
+{# field = The field to render. #}
+
+{% load widget_tweaks %}
+
+<div class="w-full flex flex-row flex-wrap items-center">
+    <label for="{{ field.id_for_label }}"
+           class="w-full text-left pl-3 pr-4 mb-1 md:w-3/12 md:text-right">
+        {{ field.label }}
+    </label>
+    {% render_field field class="w-full md:w-6/12" %}
+</div>

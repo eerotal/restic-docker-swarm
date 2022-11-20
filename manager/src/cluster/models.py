@@ -50,11 +50,13 @@ class DockerService(models.Model):
     """Class representing a service in the Swarm cluster."""
 
     BACKUP_STATUS_DISABLED = 'DISABLED'
+    BACKUP_STATUS_PENDING = 'PENDING'
     BACKUP_STATUS_ACTIVE = 'ACTIVE'
     BACKUP_STATUS_FAILING = 'FAILING'
 
     BACKUP_STATUS_CHOICES = [
         (BACKUP_STATUS_DISABLED, 'Disabled'),
+        (BACKUP_STATUS_PENDING, 'Pending'),
         (BACKUP_STATUS_ACTIVE, 'Active'),
         (BACKUP_STATUS_FAILING, 'Failing')
     ]
@@ -70,7 +72,7 @@ class DockerService(models.Model):
     ]
 
     # Docker data
-    identifier = models.TextField(max_length=100, unique=True, blank=False)
+    identifier = models.TextField(unique=True, blank=False)
     name = models.TextField(blank=False)
 
     # RDS data
@@ -181,7 +183,7 @@ class DockerContainer(models.Model):
     ]
 
     # Docker data
-    identifier = models.TextField(max_length=100, unique=True, blank=False)
+    identifier = models.TextField(unique=True, blank=False)
     name = models.TextField(blank=False)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=False)
     node = models.ForeignKey(ClusterNode, on_delete=models.CASCADE, blank=False, null=False)

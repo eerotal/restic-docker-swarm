@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+<!-- Backend configuration START -->
+<div class="w-full mb-4">
+    <h2 class="text-xl font-bold border-b border-slate-200">Backends</h2>
+
+    <div class="w-full py-4 grid grid-cols-1 gap-4">
+        {% for backend in backends %}
+        <div class="shadow-md rounded-md bg-slate-50">
+            <div class="flex flex-row items-center mx-4 pt-2 pb-1 border-b border-slate-200">
+                <h3 class="inline-block mr-2 text-lg font-bold overflow-hidden overflow-ellipsis whitespace-nowrap">
+                    {% if backend.0.name.value %}{{ backend.0.name.value }}{% else %}Add backend{% endif %}
+                </h3>
+            </div>
+            <div class="text-sm whitespace-nowrap mx-4 py-4">
+                <form clas="w-full" action="" method="POST">
+                    {% csrf_token %}
+
+                    {% include "partials/form_control.html" with field=backend.0.name %}
+                    {% include "partials/form_control.html" with field=backend.0.protocol %}
+
+                    {% for field in backend.1 %}
+                    {% include "partials/form_control.html" with field=field %}
+                    {% endfor %}
+
+                    <div class="w-full flex flex-row flex-wrap items-center">
+                        <div class="w-full px-8 flex flex-col justify-end md:flex-row md:w-9/12">
+                            {% if backend.0.instance.pk %}
+                            <input value="Delete"
+                               type="submit"
+                               formaction="{% url 'restic:delete_restic_backend' backend.0.instance.pk %}"
+                               class="btn my-2 bg-red-400 hover:bg-red-600 text-white w-full md:w-24 md:ml-4"
+                               onclick="return confirm('Delete backend? All related repository configurations will be lost, but the repository contents will be preserved.')"
+                               formnovalidate="formnovalidate">
+                            <input value="Save"
+                               type="submit"
+                               formaction="{% url 'restic:save_restic_backend' backend.0.instance.pk %}"
+                               class="btn my-2 bg-green-400 hover:bg-green-600 text-white w-full md:w-24 md:ml-4">
+                            {% else %}
+                            <input value="Add"
+                               type="submit"
+                               formaction="{% url 'restic:create_restic_backend' %}"
+                               class="btn my-2 bg-green-400 hover:bg-green-600 text-white w-full md:w-24 md:ml-4">
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<!-- Backend configuration END -->
+
+{% endblock %}

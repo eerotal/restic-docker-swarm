@@ -1,8 +1,11 @@
-a.btn {
-    @apply block flex flex-row justify-center items-center h-8 bg-white
-           rounded-full drop-shadow-sm transition-all duration-100;
+@layer components {
+    .btn {
+        @apply block flex flex-row justify-center items-center h-8 bg-white
+               rounded-full drop-shadow-sm transition-all duration-100
+               cursor-pointer;
 
-    &:hover {
-        @apply bg-slate-200 drop-shadow-md;
+        &:hover {
+            @apply bg-slate-200 drop-shadow-md;
+        }
     }
 }

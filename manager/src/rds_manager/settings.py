@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cluster',
-    'restic'
+    'restic',
+    'widget_tweaks'
 ]
 
 MIDDLEWARE = [

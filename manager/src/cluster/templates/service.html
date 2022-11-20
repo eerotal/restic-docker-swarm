@@ -12,12 +12,102 @@
 
 <!-- Backup configuration START -->
 <div class="w-full mb-4">
-    <h2 class="text-xl font-bold border-b border-slate-200">Backup Configuration</h2>
+    <h2 class="text-xl font-bold border-b border-slate-200">Backup Scheduling</h2>
 
-    <div class="w-full grid grid-cols-1 xl:grid-cols-2 gap-4 py-4">
+    <div class="w-full py-4">
+        {% if backup_config %}
+        <form class="w-full" action="{% url 'cluster:save_backup_config' service.identifier %}" method="POST">
+            {% csrf_token %}
+
+            <!-- Form fields START -->
+            {% include "partials/form_control.html" with field=backup_config_form.schedule %}
+            {% include "partials/form_control.html" with field=backup_config_form.pre_hook %}
+            {% include "partials/form_control.html" with field=backup_config_form.post_hook %}
+            <!-- Form fields END -->
+
+            <!-- Action buttons START -->
+            <div class="w-full flex flex-row flex-wrap items-center">
+                <div class="w-full flex flex-row justify-end md:w-9/12">
+                    <input value="Disable backups"
+                       type="submit"
+                       formaction="{% url 'cluster:delete_backup_config' service.identifier %}"
+                       class="btn mx-8 bg-red-400 hover:bg-red-600 text-white w-full md:w-48 md:m-0"
+                       onclick="return confirm('Disable backups? The backup configuration for this service will be lost but existing backups will be preserved.')"
+                       formnovalidate="formnovalidate">
+                </div>
+            </div>
+            {% include "partials/form_save.html" %}
+            <!-- Action buttons END -->
+        </form>
+        {% else %}
+        <form class="w-full" action="{% url 'cluster:create_backup_config' service.identifier %}" method="POST">
+            {% csrf_token %}
+            <div class="flex flex-col items-center">
+                <p class="text-center mb-4">Scheduled backups are not enabled for this service.</p>
+                <input value="Enable backups"
+                       type="submit"
+                       value="enable"
+                       class="btn bg-green-400 hover:bg-green-600 text-white w-full md:w-52">
+            </div>
+        </form>
+        {% endif %}
     </div>
 </div>
 <!-- Backup configuration END -->
+
+<!-- Repository configuration START -->
+<div class="w-full mb-4">
+    <h2 class="text-xl font-bold border-b border-slate-200">Repositories</h2>
+
+    <div class="w-full py-4 grid grid-cols-1 gap-4">
+        {% if backup_config %}
+        {% for repo in repos %}
+        <div class="shadow-md rounded-md bg-slate-50">
+            <div class="flex flex-row items-center mx-4 pt-2 pb-1 border-b border-slate-200">
+                <h3 class="inline-block mr-2 text-lg font-bold overflow-hidden overflow-ellipsis whitespace-nowrap">
+                    {% if not repo.name.value %}Add repository{% else %}{{ repo.name.value }}{% endif %}
+                </h3>
+            </div>
+            <div class="text-sm whitespace-nowrap mx-4 py-4">
+                <form clas="w-full" method="POST">
+                    {% csrf_token %}
+
+                    {% include "partials/form_control.html" with field=repo.name %}
+                    {% include "partials/form_control.html" with field=repo.location %}
+                    {% include "partials/form_control.html" with field=repo.resticbackend %}
+
+                    <div class="w-full flex flex-row flex-wrap items-center">
+                        <div class="w-full px-8 flex flex-col justify-end md:flex-row md:w-9/12">
+                            {% if repo.instance.pk %}
+                            <input value="Delete"
+                               type="submit"
+                               class="btn my-2 bg-red-400 hover:bg-red-600 text-white w-full md:w-24 md:ml-4"
+                               formaction="{% url 'cluster:delete_restic_repository' service.identifier repo.instance.pk %}"
+                               formnovalidate="formnovalidate">
+                            <input value="Save"
+                               type="submit"
+                               formaction="{% url 'cluster:save_restic_repository' service.identifier repo.instance.pk %}"
+                               class="btn my-2 bg-green-400 hover:bg-green-600 text-white w-full md:w-24 md:ml-4">
+                            {% else %}
+                            <input value="Add"
+                               type="submit"
+                               formaction="{% url 'cluster:create_restic_repository' service.identifier %}"
+                               class="btn my-2 bg-green-400 hover:bg-green-600 text-white w-full md:w-24 md:ml-4">
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="w-full flex flex-col items-center">
+            <p class="text-gray-400">Scheduled backups must be enabled before repositories can be configured.</p>
+        </div>
+    {% endif %}
+    </div>
+</div>
+<!-- Repository configuration END -->
 
 
 <!-- Containers list START -->
