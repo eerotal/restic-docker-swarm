@@ -3,83 +3,83 @@
 ![Build and push to Docker Hub badge](https://github.com/eerotal/restic-docker-swarm/workflows/Deployment/badge.svg)
 ![Unit tests badge](https://github.com/eerotal/restic-docker-swarm/workflows/Tests/badge.svg)
 
-`restic-docker-swarm` is a utility Docker image for automating Docker
-volume backups to remote directories using *restic*.
-
-`restic-docker-swarm` consists of two container images: `restic-docker-swarm-agent`
-and `restic-docker-swarm-server`. The agent container periodically runs restic to backup
-Docker volumes. The server container runs an OpenSSH server which can be used to store the
-restic repositories remotely via SFTP. You can also use a normal SSH server as the remote
-in which case you don't need to deploy the server image at all.
+`restic-docker-swarm` is a utility Docker image for automating Docker volume backups to
+SFTP directories using *restic*. `restic-docker-swarm` consists of one Docker image:
+`restic-docker-swarm-agent`. The project also includes another image: `restic-docker-swarm-server`,
+however this image is mainly intended for development purposes.
 
 ## Images
 
 Docker images are available on Docker Hub:
-[eerotal/restic-docker-swarm-agent](https://hub.docker.com/repository/docker/eerotal/restic-docker-swarm-agent)
-and [eerotal/restic-docker-swarm-server](https://hub.docker.com/repository/docker/eerotal/restic-docker-swarm-server).
+[eerotal/restic-docker-swarm-agent](https://hub.docker.com/repository/docker/eerotal/restic-docker-swarm-agent).
 
 ## Usage
 
 A example Swarm stack file `test/stack.yml` is provided in this repository. In a
 nutshell, you must configure the containers to your liking using environment
-variables, service labels, volume mounts and Docker secrets. See the sections below
-for information on how the agent and server images are configured. Using the stack file
-from `test/stack.yml` as an example is the best way to get started.
+variables, service labels, volume mounts and Docker secrets. Using the stack file
+from `test/stack.yml` as an example is the best way to get started, however some
+modifications are needed because that stack file is mainly intended for development
+testing.
 
 ## Agent configuration
 
 The `restic-docker-swarm-agent` container can be configured with the following
 environment variables.
 
-| Variable                  | Default                             | Description                                                  |
-|---------------------------|-------------------------------------|--------------------------------------------------------------|
-| SSH_HOST                  |                                     | Name that resolves to the remote SSH host. *1                |
-| SSH_PORT                  | 2222                                | SSH port used by the remote host.                            |
-| SSH_PRIVKEY_FILE          | /run/secrets/restic-ssh-privkey     | A path to the SSH identity file in the container. *2         |
-| SSH_KNOWN_HOSTS_FILE      | /run/secrets/restic-ssh-known-hosts | A path to the SSH known hosts file in the container. *2      |
-| RESTIC_REPO_PASSWORD_FILE | /run/secrets/restic-repo-password   | A path to the restic repo password file in the container. *2 |
-| BACKUP_FORGET_POLICY      | 1 1 1 1 1 0y0m0d0h 0 false          | Policy for forgetting and pruning old backups. *3            |
-| EXTRA_ARGS                |                                     | Extra arguments passed to the internal rds-run program. *4   |
+| Variable                  | Default                             | Description                                       |
+|---------------------------|-------------------------------------|---------------------------------------------------|
+| SSH_HOST                  |                                     | Remote SFTP host.                                 |
+| SSH_PORT                  | 2222                                | SFTP port used by the remote.                     |
+| SSH_PRIVKEY_FILE          | /run/secrets/restic-ssh-privkey     | SSH identity file in the container.               |
+| SSH_KNOWN_HOSTS_FILE      | /run/secrets/restic-ssh-known-hosts | SSH known hosts file in the container.            |
+| RESTIC_REPO_PASSWORD_FILE | /run/secrets/restic-repo-password   | Restic repo password file in the container.       |
+| BACKUP_FORGET_POLICY      | 1 1 1 1 1 0y0m0d0h 0 false          | Policy for forgetting and pruning old backups.    |
+| EXTRA_ARGS                |                                     | Extra arguments for the internal rds-run program. |
 
 **Notes:**
 
-1. You can use the name of the server service here if you're also running it
-   as a Swarm service (eg. using `restic-docker-swarm-server`).
-2. The `*_FILE` variables are paths to the respective files inside the container.
-   You can use these to configure eg. paths to secrets but usually the defaults
-   should work fine.
-3. The expected format for the forget policy is `HOURLY DAILY WEEKLY MONTHLY YEARLY
-   WITHIN LAST PRUNE [TAG]` where each word corresponds to an argument passed to
-   'restic forget'. PRUNE should be 'true' or 'false' depending on whether
-   forgotten backups should be pruned automatically. '[TAG]' is optional and it
-   can also be a comma separated list of multiple tags to keep. See the [restic
-   documentation](https://restic.readthedocs.io/en/latest/060_forget.html) for more
-   info.
-4. Take a look into the source repository for more information. For example, you
-   can pass `--verbose` in `EXTRA_ARGS` for more verbose logs but usually this
-   variable is not needed.
+The format for *BACKUP_FORGET_POLICY* is
+
+```
+    HOURLY DAILY WEEKLY MONTHLY YEARLY WITHIN LAST PRUNE [TAG]
+```
+
+The fields HOURLY, DAILY, WEEKLY, MONTHLY and YEARLY should contain the number of snapshots
+of each type to keep. For example, if DAILY = 2, two of the newest daily snapshots are kept
+and older ones are forgotten.
+
+The WITHIN field can be used to specify a duration within which snapshots are kept. For example,
+if WITHIN = 1y2m5d10h, all snapshots taken within 1 year, 2 months, 5 days and 10 hours are kept.
+
+If TAG is set, all snapshots with the given tag are kept. Multiple tags can be specified
+as a comma separated list. The TAG field is optional.
 
 Each service you want to back up should define the following **service** labels.
 
-| Label                | Description                                        |
-|----------------------|----------------------------------------------------|
-| rds.backup           | "true" to enable backups.                          |
-| rds.backup.repos     | Repository paths. *1                               |
-| rds.backup.run-at    | Cron expression for taking backups.                |
-| rds.backup.pre-hook  | Pre-backup hook command to run in the service. *2  |
-| rds.backup.post-hook | Post-backup hook command to run in the service. *2 |
+## Service configuration
+
+Services to be backed up must be configured with the following service labels. You must also
+mount the volumes to be backed up under the */backup* path in the agent container.
+
+| Label                | Description                                     | Notes |
+|----------------------|-------------------------------------------------|-------|
+| rds.backup           | "true" to enable backups.                       |       |
+| rds.backup.repos     | Backup paths.                                   | 1     |
+| rds.backup.run-at    | Cron expression for taking backups.             |       |
+| rds.backup.pre-hook  | Pre-backup hook command to run in the service.  | 2     |
+| rds.backup.post-hook | Post-backup hook command to run in the service. | 2     |
 
 **Notes:**
 
-1. The `rds.repos` label sets the repository path(s) on the remote SFTP server as well
-   as the backup path(s) in the agent container. Repo paths must always be relative.
-   Absolute repository paths are skipped with an error. For example, if you set
-   `rds.repos: my-volume`, the backups will be stored on the remote server in
-   `my-volume` under the default SFTP directory. The backups will also be taken
-   from `/backup/my-volume/` in the `restic-docker-swarm-agent` container meaning
-   you must mount your volume at this path. You can also specify multiple repositories
-   as a comma separated list. This is useful for example if you want to backup
-   multiple volumes from a single service.
+1. The `rds.repos` label sets the backup path(s) in the agent container. Backups
+   paths are relative to */backup* path in the container. Passing an absolute path
+   will cause an error. The repository paths also define the destination path on the
+   SFTP server. For example, if you set `rds.repos: my-volume`, backups will be stored
+   on the remote server in `my-volume` under the default SFTP directory and the backups
+   will be taken from `/backup/my-volume/` in the `restic-docker-swarm-agent` container.
+   You can also specify multiple repositories as a comma separated list. This is useful
+   for example if you want to backup multiple volumes from a single service.
 2. See the section Pre- and post-backup hooks.
 
 Secrets are passed to the container using Docker Swarm secrets. The following
@@ -87,34 +87,9 @@ secrets are required
 
 | Secret                 | Description                                                            |
 |------------------------|------------------------------------------------------------------------|
-| restic-ssh-privkey     | The SSH private key used for authenticating to the remote server.      |
+| restic-ssh-privkey     | An SSH private key used for authenticating to the remote server.       |
 | restic-ssh-known-hosts | An SSH known_hosts file which contains an entry for the remote server. |
-| restic-repo-password   | The password to use for the restic repository.                         |
-
-A suitable known_hosts file for `restic-ssh-known-hosts` is automatically generated
-by the server image on first boot. The file is placed at `/etc/ssh/host_fingerprints/known_hosts`.
-You can create the `restic-ssh-known-hosts` secret directly from this file. In the
-example setup at `test/stack.yml` the known_hosts file is directly mounted between the
-server and agent containers and `SSH_KNOWN_HOSTS_FILE` is modified to suit. This will,
-however, only work if the agent and server containers are running on the same node since
-volumes are not shared between nodes by default.
-
-If you run the containers on separate nodes (which usually should be the case) you have to start the
-server container first and manually create a Swarm secret from the known_hosts file it generates.
-After doing this you can launch all agent containers which use manually created Swarm secret.
-
-## Server configuration
-
-The `restic-docker-swarm-server` image can be configured with the following
-environment variables.
-
-| Variable                  | Default                             | Description                                                  |
-|---------------------------|-------------------------------------|--------------------------------------------------------------|
-| SSHD_PORT                 | 2222                                | SSH port used by sshd.                                       |
-| SWARM_SERVICE             |                                     | A name that resolves to the **server** service.              |
-
-You should mount a volume at `/home/restic` for preserving your restic repositories
-across container reboots.
+| restic-repo-password   | The password to use for restic repositories.                           |
 
 ## Agent CLI usage
 
@@ -130,8 +105,8 @@ docker exec -it CONTAINER_ID sh
 The agent container includes a wrapper called *rds-run* for running *restic*
 with a default set of arguments. *rds-run* is by default configured to perform all
 operations on the SFTP host configured for the agent container. Run `rds-run -h`
-for a help message. Arguments passed to *rds-run* are passed to the *restic*
-binary after the default ones.
+for a help message. Arguments passed to *rds-run* are forwarded to the *restic*
+binary following the default ones.
 
 Example usage:
 
@@ -145,18 +120,6 @@ ID        Time                 Host          Tags        Paths
 ---------------------------------------------------------------------------
 1 snapshots
 /home/restic #
-```
-
-## Server CLI usage
-
-The `restic-docker-swarm-server` image includes the restic binary which you can
-use to manage your restic repositories, manually take backups, restore backups etc.
-Restic repositories are stored at `/home/restic` by default.
-
-You can access the container by running
-
-```
-docker exec -it CONTAINER_ID sh
 ```
 
 ## Pre- and post-backup hooks

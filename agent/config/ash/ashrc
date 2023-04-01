@@ -2,14 +2,12 @@
 
 printf "\033[1m"
 printf "\n--- \033[4mrestic-docker-swarm-agent\033[0m\033[1m ---\033[0m\n\n"
-printf "The 'restic' backup utility is installed in this container.\n"
-printf "Run 'restic -h' for help.\n\n"
 
-printf "You can run restic with a set of default arguments by running \n"
-printf "'runrestic'. The default arguments are such that all operations are\n"
-printf "done on the remote repository configured for this agent instance.\n"
-printf "You can see a help message and the default restic command by running\n"
-printf "'runrestic' with no arguments.\n\n"
+printf "* The 'restic' backup utility is installed in this container.\n"
+printf "  Run 'restic -h' for help.\n\n"
+
+printf "* You can run restic on the configured backup remote with 'rds-run'.\n"
+printf "  Run 'rds-run -h' for help.\n\n"
 
 if [ "$(whoami)" = "root" ]; then
     printf "Note: You're running as root. Unless you need the permissions,\n"
